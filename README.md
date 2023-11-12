@@ -20,12 +20,13 @@ Use *mgy* prefix to run commands. Example:
 ## Getting Started
 > $ git clone https://github.com/ulf881/mgy-bot
 > 
-> $ pip install -r requirements.txt
+> $ pip install -r poetry
+> $ poetry install
 
 Update .env file.
 
 Run with
-> $ python bot.py
+> $ poetry run python bot.py
 
 ### Prerequisites
 
@@ -39,7 +40,7 @@ Run with
 * ([FFMpeg](https://ffmpeg.org/download.html)) - Make sure you have FFMPeg
 * pip install --upgrade yt_dlp - Always keep yt_dlp upToDate. The "mgy restart" command also updates this package
 * python3 -m pip install -U discord.py - Make sure voice is installed
-* Everything else in: *requirements.txt*
+* Everything else in: *pyproject.toml*
 
 ## Built With
 
