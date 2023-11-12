@@ -25,6 +25,8 @@ spotipy = "^2.23.0"
 python-dotenv = "^1.0.0"
 pycord = "^0.1.1"
 yt-dlp = "^2023.10.13"
+sqlalchemy = "^2.0.23"
+decouple = "^0.0.7"
 
 
 [build-system]
