@@ -18,15 +18,18 @@ Use *mgy* prefix to run commands. Example:
 > mgy help
 
 ## Getting Started
-> $ git clone https://github.com/ulf881/mgy-bot
-> 
-> $ pip install -r poetry
-> $ poetry install
+copy .env.example, rename it to .envio and update the variables with your credentials
 
-Update .env file.
+```bash
+git clone https://github.com/ulf881/mgy-bot 
+pip install -r poetry
+poetry install
+```
 
 Run with
-> $ poetry run python bot.py
+```bash
+poetry run python bot.py
+```
 
 ### Prerequisites
 
