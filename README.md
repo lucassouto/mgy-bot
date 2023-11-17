@@ -18,15 +18,16 @@ Use *mgy* prefix to run commands. Example:
 > mgy help
 
 ## Getting Started
-copy .env.example, rename it to .envio and update the variables with your credentials
+- Clone the repo
+- Copy .env.example, rename it to .env and update the variables with your credentials
+- Install dependencies
 
 ```bash
-git clone https://github.com/ulf881/mgy-bot 
 pip install -r poetry
 poetry install
 ```
 
-Run with
+Run bot
 ```bash
 poetry run python bot.py
 ```
@@ -34,24 +35,21 @@ poetry run python bot.py
 ### Prerequisites
 
 * Git
-* Python 3.10
+* Python ^3.11
 * Postgres database
-* Dicord bot token
-* Spotify token
-* Youtube api token
-* Youtube cookies.txt - optional file. Can help avoid errors in age restricted videos
-* ([FFMpeg](https://ffmpeg.org/download.html)) - Make sure you have FFMPeg
-* pip install --upgrade yt_dlp - Always keep yt_dlp upToDate. The "mgy restart" command also updates this package
-* python3 -m pip install -U discord.py - Make sure voice is installed
+* [Dicord bot token](https://discord.com/developers/applications) 
+* [Spotify token](https://developer.spotify.com/)
+* YouTube API token - You need to create a GCP account for this and enable the YouTube Data v3 API. [Here](https://developers.google.com/youtube/v3/getting-started) is a guide on how to do it
+* YouTube cookies.txt - optional file. Can help avoid errors in age restricted videos
+* [FFMpeg](https://ffmpeg.org/download.html) - Make sure you have FFMPeg
 * Everything else in: *pyproject.toml*
 
 ## Built With
 
-* [Python](https://www.python.org/) - Python 3.10
+* [Python](https://www.python.org/) - Python 3.11
 * [DiscordPy](https://github.com/Rapptz/discord.py) - discord.py 2.2
 * [yt-dlp](https://github.com/yt-dlp/yt-dlp) - yt-dlp (always up to date)
-* [Base](https://github.com/ulf881/python-base) - Python starting utils
-* [flake8](https://github.com/PyCQA/flake8) - Flake8 for linting and code styling
+* [ruff](https://github.com/astral-sh/ruff) - Ruff for linting and code styling
 
 ### TODOs
 * There is a lot of TODO tags in code
@@ -61,7 +59,7 @@ poetry run python bot.py
 * markov module
 * optimizations
 * Make every module optional and give warnings instead of errors
-* Fix spotipy - Randomly gives errors 403 - Suppoort more links
+* Fix spotipy - Randomly gives errors 403 - Support more links
 * Fix dropbox mashups
 * Automate deploy
 * Anything you want
