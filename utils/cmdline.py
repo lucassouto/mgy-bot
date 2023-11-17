@@ -11,7 +11,7 @@ from utils import __author__, __email__, __program__, __version__
 log = logging.getLogger("cmdline")
 
 
-def banner():
+def display_banner():
     """
     Exibe banner ao rodar o programa
     Editar ASCII art em: http://patorjk.com/software/taag/#p=display&f=Doom&t=discord
