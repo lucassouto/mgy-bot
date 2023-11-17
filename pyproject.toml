@@ -25,7 +25,8 @@ spotipy = "^2.23.0"
 python-dotenv = "^1.0.0"
 pycord = "^0.1.1"
 yt-dlp = "^2023.10.13"
-sqlalchemy = "^2.0.23"
+sqlalchemy = {version="^2.0.23", extras=["asyncio"]}
+asyncpg = "^0.29.0"
 alembic = "^1.12.1"
 python-decouple = "^3.8"
 
