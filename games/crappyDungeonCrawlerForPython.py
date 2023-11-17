@@ -82,15 +82,9 @@ def title(ctx):
     ctx.message.send("        #     # #   #   #   # # # #   #     #    # #   ")
     ctx.message.send("         #### #  #  #   #    #   #    ##### #### #  #  ")
 
-    ctx.message.send(
-        " \n -> Welcome to Crappy Dungeon Crawler v1.2 for *P*Y*T*H*O*N*!* <- \n"
-    )
-    ctx.message.send(
-        " Follow the instructions on the screen and type your commands to play"
-    )
-    ctx.message.send(
-        " Kill monsters, disarm traps and collect coins and gems to increase your SCORE"
-    )
+    ctx.message.send(" \n -> Welcome to Crappy Dungeon Crawler v1.2 for *P*Y*T*H*O*N*!* <- \n")
+    ctx.message.send(" Follow the instructions on the screen and type your commands to play")
+    ctx.message.send(" Kill monsters, disarm traps and collect coins and gems to increase your SCORE")
     ctx.message.send(" Get a *100* SCORE to *W*I*N*!!")
 
 
@@ -112,17 +106,10 @@ def jogada(ctx, acao):
         monsterAdjective = monsterADJ[randint(0, len(monsterADJ) - 1)]
         trapAdjective = trapADJ[randint(0, len(trapADJ) - 1)]
 
-        # debug line, uncomment to test specific room types
-        # roomGen = 4
-
         # change difficult (monster and trap stats) according to # of moves
         if counter < 20:
             monsterNAME = (
-                nmSt[randint(0, 4)]
-                + vog[randint(0, 4)]
-                + con[randint(0, 4)]
-                + vog[randint(0, 4)]
-                + con[randint(0, 4)]
+                nmSt[randint(0, 4)] + vog[randint(0, 4)] + con[randint(0, 4)] + vog[randint(0, 4)] + con[randint(0, 4)]
             )  # random monster name
             monsterATK = 1 + randint(1, 3)
             monsterDEF = 3 + randint(1, 3)
@@ -131,11 +118,7 @@ def jogada(ctx, acao):
         elif counter == 20:
             ctx.message.send("\n ATTENTION! \n Things will get harder!\n")
             monsterNAME = (
-                nmSt[randint(0, 4)]
-                + vog[randint(0, 4)]
-                + con[randint(0, 4)]
-                + vog[randint(0, 4)]
-                + con[randint(0, 4)]
+                nmSt[randint(0, 4)] + vog[randint(0, 4)] + con[randint(0, 4)] + vog[randint(0, 4)] + con[randint(0, 4)]
             )
             monsterATK = 1 + randint(1, 3)
             monsterDEF = 3 + randint(1, 3)
@@ -143,11 +126,7 @@ def jogada(ctx, acao):
             trapATK = 3 + randint(1, 6)
         else:
             monsterNAME = (
-                nmSt[randint(0, 4)]
-                + vog[randint(0, 4)]
-                + con[randint(0, 4)]
-                + vog[randint(0, 4)]
-                + con[randint(0, 4)]
+                nmSt[randint(0, 4)] + vog[randint(0, 4)] + con[randint(0, 4)] + vog[randint(0, 4)] + con[randint(0, 4)]
             )
             monsterATK = 1 + randint(1, 3)
             monsterDEF = 3 + randint(1, 3)
@@ -156,9 +135,7 @@ def jogada(ctx, acao):
 
         # display start up text
         if counter == 0:
-            ctx.message.send(
-                "\n Your ATK is " + str(playerATK) + " | Your DEF is " + str(playerDEF)
-            )
+            ctx.message.send("\n Your ATK is " + str(playerATK) + " | Your DEF is " + str(playerDEF))
             ctx.message.send(" Your score is " + str(score))
             ctx.message.send(" You made " + str(counter) + " moves")
             playerState = int(input("\n-->Type 1 to START or 0 to GIVE UP:  \n"))
@@ -211,9 +188,7 @@ def jogada(ctx, acao):
                 action = 0
 
                 ctx.message.send("\n You enter the " + roomAdjective + " room")
-                ctx.message.send(
-                    " The room has a " + monsterAdjective + " " + monsterNAME
-                )
+                ctx.message.send(" The room has a " + monsterAdjective + " " + monsterNAME)
                 ctx.message.send("")
                 ctx.message.send("           ^_____^        ")
                 ctx.message.send("           0     0        ")
@@ -232,17 +207,7 @@ def jogada(ctx, acao):
                 ctx.message.send("")
                 ctx.message.send(" Your ATK is " + str(playerATK))
                 ctx.message.send(" Your DEF is " + str(playerDEF))
-
-                # player decision
-                # time.sleep(TEMPO)
-                # if not self.bot.acoes:
-                #   self.bot.game = FALSE
-                #   return
-                # jogada = most_common(self.bot.acoes)
-                # self.bot.acoes = []
-                action = int(
-                    input("\n-->Type 1 to attack \n-->Type other number to run away \n")
-                )
+                action = int(input("\n-->Type 1 to attack \n-->Type other number to run away \n"))
 
                 if action != 1:
                     # RUN AWAY
@@ -260,23 +225,15 @@ def jogada(ctx, acao):
                         score = score + monsterSCORE
                         counter = counter + 1
                     elif monsterATK + diceM >= playerDEF:
-                        ctx.message.send(
-                            " The " + monsterNAME + " rolled " + str(diceM)
-                        )
+                        ctx.message.send(" The " + monsterNAME + " rolled " + str(diceM))
                         ctx.message.send(" The " + monsterNAME + " killed you")
                         score = score - 1
                         counter = counter + 1
                         playerState = 0
                     else:
                         ctx.message.send("\n The monster rolled " + str(diceM))
-                        ctx.message.send(
-                            " You and the "
-                            + monsterNAME
-                            + " try to attack each other but can't"
-                        )
-                        ctx.message.send(
-                            " You two end up having a pleasant conversation"
-                        )
+                        ctx.message.send(" You and the " + monsterNAME + " try to attack each other but can't")
+                        ctx.message.send(" You two end up having a pleasant conversation")
                         score = score + monsterSCORE
                         counter = counter + 1
 
@@ -298,11 +255,7 @@ def jogada(ctx, acao):
                 ctx.message.send(" Your DEF " + str(playerDEF))
 
                 # player decision
-                action = int(
-                    input(
-                        "\n-->Type 1 to disarm \n-->Type other number to avoid the trap \n"
-                    )
-                )
+                action = int(input("\n-->Type 1 to disarm \n-->Type other number to avoid the trap \n"))
 
                 if action != 1:
                     ctx.message.send("\n You avoided the trap")
@@ -338,9 +291,7 @@ def jogada(ctx, acao):
                 ctx.message.send("")
 
                 # player decision
-                action = int(
-                    input("\n-->Type 1 to open \n-->Type other number to proceed \n")
-                )
+                action = int(input("\n-->Type 1 to open \n-->Type other number to proceed \n"))
 
                 if action != 1:
                     ctx.message.send("\n You leave the closed chest behind \n")
@@ -366,50 +317,32 @@ def jogada(ctx, acao):
                         ctx.message.send(" Do you wish to drink it?")
 
                         # player decision
-                        action = int(
-                            input(
-                                "\n-->Type 1 to drink \n-->Type other number to proceed \n"
-                            )
-                        )
+                        action = int(input("\n-->Type 1 to drink \n-->Type other number to proceed \n"))
 
                         if action != 1:
                             ctx.message.send("\n You leave the bottle behind...")
                         else:
-                            ctx.message.send(
-                                "\n You drink the potion!\n You feel stronger!"
-                            )
+                            ctx.message.send("\n You drink the potion!\n You feel stronger!")
                             playerATK = playerATK + 2
                             score = score + 2
-                            ctx.message.send(
-                                " Your ATK was increased to " + str(playerATK)
-                            )
+                            ctx.message.send(" Your ATK was increased to " + str(playerATK))
 
                     # poison
                     elif chest == 4:
                         action = 0
-                        ctx.message.send(
-                            " You found a bottle with a mysterious liquid!"
-                        )
+                        ctx.message.send(" You found a bottle with a mysterious liquid!")
                         ctx.message.send(" Do you wish to drink it?")
 
                         # player decision
-                        action = int(
-                            input(
-                                "\n-->Type 1 to drink \n-->Type other number to proceed \n"
-                            )
-                        )
+                        action = int(input("\n-->Type 1 to drink \n-->Type other number to proceed \n"))
 
                         if action != 1:
                             ctx.message.send(" \nYou leave the bottle behind...")
                         else:
-                            ctx.message.send(
-                                " \nYou drink the POISON!\n You feel weakened!"
-                            )
+                            ctx.message.send(" \nYou drink the POISON!\n You feel weakened!")
                             playerDEF = playerDEF - 2
                             score = score + 2
-                            ctx.message.send(
-                                " Your DEF was decreased to " + str(playerDEF)
-                            )
+                            ctx.message.send(" Your DEF was decreased to " + str(playerDEF))
 
                     # scroll
                     elif chest == 5:
@@ -418,33 +351,21 @@ def jogada(ctx, acao):
                         ctx.message.send(" Do you wish to read it?")
 
                         # player decision
-                        action = int(
-                            input(
-                                "\n-->Type 1 to read it \n-->Type other number to proceed \n"
-                            )
-                        )
+                        action = int(input("\n-->Type 1 to read it \n-->Type other number to proceed \n"))
 
                         if action != 1:
                             ctx.message.send("\n You leave the scroll behind...")
                         else:
-                            ctx.message.send(
-                                "\n You read the magic scroll!\n You feel enchanted!"
-                            )
+                            ctx.message.send("\n You read the magic scroll!\n You feel enchanted!")
                             playerATK = playerATK + randint(1, 3)
                             playerDEF = playerDEF + randint(1, 3)
                             score = score + 2
-                            ctx.message.send(
-                                " Your ATK was increased to " + str(playerATK)
-                            )
-                            ctx.message.send(
-                                " Your DEF was increased to " + str(playerDEF)
-                            )
+                            ctx.message.send(" Your ATK was increased to " + str(playerATK))
+                            ctx.message.send(" Your DEF was increased to " + str(playerDEF))
 
                     # empty chest
                     elif chest == 6:
-                        ctx.message.send(
-                            " The chest was empty!\n Better luck next time... "
-                        )
+                        ctx.message.send(" The chest was empty!\n Better luck next time... ")
 
             # ZAP ROOM
             elif roomGen == 5:

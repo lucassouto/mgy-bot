@@ -1,5 +1,6 @@
-# TODO
+# ruff: noqa: T201
 import os
+
 import requests
 
 
@@ -43,10 +44,7 @@ class Twitch:
 
                 stream_data = stream.json()
 
-            if len(stream_data["data"]) == 1:
-                return True
-            else:
-                return False
+            return len(stream_data["data"]) == 1
         except:
             return False
 

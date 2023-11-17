@@ -1,12 +1,11 @@
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 
-from models.base import BaseModel
+import models
 
 
-class Level(BaseModel):
+class Level(models.BaseModel):
     __tablename__ = "levels"
 
     name: Mapped[str]
     value: Mapped[int]
-    users: Mapped[list["User"]] = relationship("User", back_populates="level", lazy="select")
+    users: Mapped[list["models.User"]] = relationship("User", back_populates="level", lazy="select")

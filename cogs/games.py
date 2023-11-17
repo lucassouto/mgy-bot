@@ -1,10 +1,11 @@
 """
     Modulo para games. AKA CrappyDungeon
 """
-import logging
 import asyncio
-from random import randint
+import logging
 from collections import Counter
+from random import randint
+
 from discord.ext import commands
 
 log = logging.getLogger("Games")
@@ -20,26 +21,24 @@ def most_common(lst: list):
 
 async def title(ctx: commands.Context):
     """Title screen do crappy"""
-    # await ctx.send("  #### ####   ###  ####  ####  #     # ")
-    # await ctx.send(" #     #   # #   # #   # #   #  #   #  ")
-    # await ctx.send(" #     ####  ##### #   # #   #   # #   ")
-    # await ctx.send(" #     # #   #   # ####  ####     #    ")
-    # await ctx.send("  #### #  #  #   # #     #        #    ")
+    # await ctx.send("  #### ####   ###  ####  ####  #     # ")  # noqa: ERA001
+    # await ctx.send(" #     #   # #   # #   # #   #  #   #  ")  # noqa: ERA001
+    # await ctx.send(" #     ####  ##### #   # #   #   # #   ")  # noqa: ERA001
+    # await ctx.send(" #     # #   #   # ####  ####     #    ")  # noqa: ERA001
+    # await ctx.send("  #### #  #  #   # #     #        #    ")  # noqa: ERA001
 
-    # await ctx.send("    ####  #   # #   #  ####  ####  ####  #   # ")
-    # await ctx.send("    #   # #   # ##  # #      #    #    # ##  # ")
-    # await ctx.send("    #   # #   # # # # #  ### ###  #    # # # # ")
-    # await ctx.send("    #   # #   # #  ## #    # #    #    # #  ## ")
-    # await ctx.send("    ####   ###  #   #  ####  ####  ####  #   # ")
+    # await ctx.send("    ####  #   # #   #  ####  ####  ####  #   # ")  # noqa: ERA001
+    # await ctx.send("    #   # #   # ##  # #      #    #    # ##  # ")  # noqa: ERA001
+    # await ctx.send("    #   # #   # # # # #  ### ###  #    # # # # ")  # noqa: ERA001
+    # await ctx.send("    #   # #   # #  ## #    # #    #    # #  ## ")  # noqa: ERA001
+    # await ctx.send("    ####   ###  #   #  ####  ####  ####  #   # ")  # noqa: ERA001
 
-    # await ctx.send("         #### ####   ###  #    #    # #     #### ####  ")
-    # await ctx.send("        #     #   # #   # #    #    # #     #    #   # ")
-    # await ctx.send("        #     ####  #####  #  # #  #  #     ###  ####  ")
-    # await ctx.send("        #     # #   #   #   # # # #   #     #    # #   ")
-    # await ctx.send("         #### #  #  #   #    #   #    ##### #### #  #  ")
-    await ctx.send(
-        "Todas as mensagens a partir desse ponto serão deletas ao fim do jogo"
-    )
+    # await ctx.send("         #### ####   ###  #    #    # #     #### ####  ")  # noqa: ERA001
+    # await ctx.send("        #     #   # #   # #    #    # #     #    #   # ")  # noqa: ERA001
+    # await ctx.send("        #     ####  #####  #  # #  #  #     ###  ####  ")  # noqa: ERA001
+    # await ctx.send("        #     # #   #   #   # # # #   #     #    # #   ")  # noqa: ERA001
+    # await ctx.send("         #### #  #  #   #    #   #    ##### #### #  #  ")  # noqa: ERA001
+    await ctx.send("Todas as mensagens a partir desse ponto serão deletas ao fim do jogo")
     await ctx.send(
         " \n -> Welcome to Crappy Dungeon Crawler v1.2 for *P*Y*T*H*O*N*!* <- \n"
         + " Follow the instructions on the screen and type your commands to play\n"
@@ -70,7 +69,6 @@ class Games(commands.Cog, name="Games"):
             self.bot.acoes = []
             self.bot.game = False
             await ctx.send("YOUR SCORE WAS " + str(self.score))
-            # self.bot.game = CrappyDungeon(ctx, jogada)
 
     async def crappy_dungeon(self, ctx: commands.Context):
         """Main do jogo Crappy Dungeon By Max"""
@@ -135,9 +133,6 @@ class Games(commands.Cog, name="Games"):
             roomAdjective = roomADJ[randint(0, len(roomADJ) - 1)]
             monsterAdjective = monsterADJ[randint(0, len(monsterADJ) - 1)]
             trapAdjective = trapADJ[randint(0, len(trapADJ) - 1)]
-
-            # debug line, uncomment to test specific room types
-            # roomGen = 4
 
             # change difficult (monster and trap stats) according to # of moves
             if counter < 20:
@@ -221,9 +216,7 @@ class Games(commands.Cog, name="Games"):
             # cheats and easter eggs
             if playerState == 99:
                 # cheat mode
-                await ctx.send(
-                    "\n     *G*O*D*\n \n    *M*O*D*E*\n \n *E*N*A*B*L*E*D*\n"
-                )
+                await ctx.send("\n     *G*O*D*\n \n    *M*O*D*E*\n \n *E*N*A*B*L*E*D*\n")
                 playerATK = 99
                 playerDEF = 99
             elif playerState == 69:
@@ -238,25 +231,20 @@ class Games(commands.Cog, name="Games"):
                 # EMPTY ROOM
                 if roomGen == 1:
                     action = 0
-                    await ctx.send(
-                        "\n You enter the "
-                        + roomAdjective
-                        + " room"
-                        + " The room is empty"
-                    )
+                    await ctx.send("\n You enter the " + roomAdjective + " room" + " The room is empty")
 
-                    # await ctx.send("       |_ _       _  _           ")
-                    # await ctx.send("       | _ _   _|     _ _        ")
-                    # await ctx.send("     | | |    _ _     _ _        ")
-                    # await ctx.send("    /  |   _   _ |  _            ")
-                    # await ctx.send("   |   |_ _	_ _       |_ _      ")
-                    # await ctx.send("   /   |    _|    _      _ _     ")
-                    # await ctx.send("       |_ _ _ _ _ _ _ _ _ _ _    ")
-                    # await ctx.send("   /  /  ~.  .  ^   .    . ^     ")
-                    # await ctx.send("   | / . . .   ,    ^~   .  .    ")
-                    # await ctx.send("    /  . ^ , ~     .  ^ .     .  ")
-                    # await ctx.send("  |/  , . .     .      ^  .      ")
-                    # await ctx.send("  / .  ^    .   .  ^   ,  . ~    ")
+                    # await ctx.send("       |_ _       _  _           ")  # noqa: ERA001
+                    # await ctx.send("       | _ _   _|     _ _        ")  # noqa: ERA001
+                    # await ctx.send("     | | |    _ _     _ _        ")  # noqa: ERA001
+                    # await ctx.send("    /  |   _   _ |  _            ")  # noqa: ERA001
+                    # await ctx.send("   |   |_ _	_ _       |_ _      ")  # noqa: ERA001
+                    # await ctx.send("   /   |    _|    _      _ _     ")  # noqa: ERA001
+                    # await ctx.send("       |_ _ _ _ _ _ _ _ _ _ _    ")  # noqa: ERA001
+                    # await ctx.send("   /  /  ~.  .  ^   .    . ^     ")  # noqa: ERA001
+                    # await ctx.send("   | / . . .   ,    ^~   .  .    ")  # noqa: ERA001
+                    # await ctx.send("    /  . ^ , ~     .  ^ .     .  ")  # noqa: ERA001
+                    # await ctx.send("  |/  , . .     .      ^  .      ")  # noqa: ERA001
+                    # await ctx.send("  / .  ^    .   .  ^   ,  . ~    ")  # noqa: ERA001
 
                     counter = counter + 1
                     while action != 1:
@@ -283,15 +271,15 @@ class Games(commands.Cog, name="Games"):
                         + monsterNAME
                     )
 
-                    # await ctx.send("           ^_____^        ")
-                    # await ctx.send("           0     0        ")
-                    # await ctx.send("       WW  |  A  |        ")
-                    # await ctx.send("       \ \ \_www_/        ")
-                    # await ctx.send("        \ \__|+|___/^\    ")
-                    # await ctx.send("         \___|+|___/\ \   ")
-                    # await ctx.send("          ___|+|___  \ \  ")
-                    # await ctx.send("          | |   | |   MM  ")
-                    # await ctx.send("         /__|   |__\      ")
+                    # await ctx.send("           ^_____^        ")  # noqa: ERA001
+                    # await ctx.send("           0     0        ")  # noqa: ERA001
+                    # await ctx.send("       WW  |  A  |        ")  # noqa: ERA001
+                    # await ctx.send("       \ \ \_www_/        ")  # noqa: ERA001
+                    # await ctx.send("        \ \__|+|___/^\    ")  # noqa: ERA001
+                    # await ctx.send("         \___|+|___/\ \   ")  # noqa: ERA001
+                    # await ctx.send("          ___|+|___  \ \  ")  # noqa: ERA001
+                    # await ctx.send("          | |   | |   MM  ")  # noqa: ERA001
+                    # await ctx.send("         /__|   |__\      ")  # noqa: ERA001
 
                     await ctx.send(
                         " The "
@@ -309,9 +297,7 @@ class Games(commands.Cog, name="Games"):
                     )
 
                     # player decision
-                    await ctx.send(
-                        "\n-->Type 1 to attack \n-->Type other number to run away \n"
-                    )
+                    await ctx.send("\n-->Type 1 to attack \n-->Type other number to run away \n")
 
                     await asyncio.sleep(TEMPO)
 
@@ -338,9 +324,7 @@ class Games(commands.Cog, name="Games"):
                             self.score += monsterSCORE
                             counter = counter + 1
                         elif monsterATK + diceM >= playerDEF:
-                            await ctx.send(
-                                " The " + monsterNAME + " rolled " + str(diceM)
-                            )
+                            await ctx.send(" The " + monsterNAME + " rolled " + str(diceM))
                             await ctx.send(" The " + monsterNAME + " killed you")
                             self.score -= 1  #
                             counter = counter + 1
@@ -361,33 +345,21 @@ class Games(commands.Cog, name="Games"):
                 elif roomGen == 3:
                     action = 0
                     await ctx.send(
-                        "\n You enter the "
-                        + roomAdjective
-                        + " room"
-                        + "\n The room has a "
-                        + trapAdjective
-                        + " trap"
+                        "\n You enter the " + roomAdjective + " room" + "\n The room has a " + trapAdjective + " trap"
                     )
 
-                    # await ctx.send("              .    .         .       ")
-                    # await ctx.send("         .    ______________         ")
-                    # await ctx.send("             /             / .       ")
-                    # await ctx.send("          . /    trap     /          ")
-                    # await ctx.send("           /             /   .       ")
-                    # await ctx.send("          /_____________/ .          ")
-                    # await ctx.send("           .       .      .          ")
+                    # await ctx.send("              .    .         .       ")  # noqa: ERA001
+                    # await ctx.send("         .    ______________         ")  # noqa: ERA001
+                    # await ctx.send("             /             / .       ")  # noqa: ERA001
+                    # await ctx.send("          . /    trap     /          ")  # noqa: ERA001
+                    # await ctx.send("           /             /   .       ")  # noqa: ERA001
+                    # await ctx.send("          /_____________/ .          ")  # noqa: ERA001
+                    # await ctx.send("           .       .      .          ")  # noqa: ERA001
 
-                    await ctx.send(
-                        " The trap ATK is "
-                        + str(trapATK)
-                        + "\n Your DEF "
-                        + str(playerDEF)
-                    )
+                    await ctx.send(" The trap ATK is " + str(trapATK) + "\n Your DEF " + str(playerDEF))
 
                     # player decision
-                    await ctx.send(
-                        "\n-->Type 1 to disarm \n-->Type other number to avoid the trap \n"
-                    )
+                    await ctx.send("\n-->Type 1 to disarm \n-->Type other number to avoid the trap \n")
                     await asyncio.sleep(TEMPO)
 
                     if not (self.bot.acoes) or ("stop" in self.bot.acoes):
@@ -418,25 +390,18 @@ class Games(commands.Cog, name="Games"):
                 elif roomGen == 4:
                     chest = randint(1, 6)  # generating chest
                     action = 0
-                    await ctx.send(
-                        "\n You enter the "
-                        + roomAdjective
-                        + " room"
-                        + " The room has a chest"
-                    )
+                    await ctx.send("\n You enter the " + roomAdjective + " room" + " The room has a chest")
 
-                    # await ctx.send("         ____________         ")
-                    # await ctx.send("        /           /|        ")
-                    # await ctx.send("       /___________/ |        ")
-                    # await ctx.send("       |     ?     | |        ")
-                    # await ctx.send("       |    ? ?    | |        ")
-                    # await ctx.send("       |     ?     | /        ")
-                    # await ctx.send("       |___________|/         ")
+                    # await ctx.send("         ____________         ")  # noqa: ERA001
+                    # await ctx.send("        /           /|        ")  # noqa: ERA001
+                    # await ctx.send("       /___________/ |        ")  # noqa: ERA001
+                    # await ctx.send("       |     ?     | |        ")  # noqa: ERA001
+                    # await ctx.send("       |    ? ?    | |        ")  # noqa: ERA001
+                    # await ctx.send("       |     ?     | /        ")  # noqa: ERA001
+                    # await ctx.send("       |___________|/         ")  # noqa: ERA001
 
                     # player decision
-                    await ctx.send(
-                        "\n-->Type 1 to open \n-->Type other number to proceed \n"
-                    )
+                    await ctx.send("\n-->Type 1 to open \n-->Type other number to proceed \n")
 
                     await asyncio.sleep(TEMPO)
                     if not (self.bot.acoes) or ("stop" in self.bot.acoes):
@@ -466,15 +431,11 @@ class Games(commands.Cog, name="Games"):
                         # potion
                         elif chest == 3:
                             action = 0
-                            await ctx.send(
-                                " You found a bottle with a mysterious liquid"
-                            )
+                            await ctx.send(" You found a bottle with a mysterious liquid")
                             await ctx.send(" Do you wish to drink it?")
 
                             # player decision
-                            await ctx.send(
-                                "\n-->Type 1 to drink \n-->Type other number to proceed \n"
-                            )
+                            await ctx.send("\n-->Type 1 to drink \n-->Type other number to proceed \n")
 
                             await asyncio.sleep(TEMPO)
                             if not (self.bot.acoes) or ("stop" in self.bot.acoes):
@@ -487,27 +448,19 @@ class Games(commands.Cog, name="Games"):
                             if action != 1:
                                 await ctx.send("\n You leave the bottle behind...")
                             else:
-                                await ctx.send(
-                                    "\n You drink the potion!\n You feel stronger!"
-                                )
+                                await ctx.send("\n You drink the potion!\n You feel stronger!")
                                 playerATK = playerATK + 2
                                 self.score = self.score + 2
-                                await ctx.send(
-                                    " Your ATK was increased to " + str(playerATK)
-                                )
+                                await ctx.send(" Your ATK was increased to " + str(playerATK))
 
                         # poison
                         elif chest == 4:
                             action = 0
-                            await ctx.send(
-                                " You found a bottle with a mysterious liquid!"
-                            )
+                            await ctx.send(" You found a bottle with a mysterious liquid!")
                             await ctx.send(" Do you wish to drink it?")
 
                             # player decision
-                            await ctx.send(
-                                "\n-->Type 1 to drink \n-->Type other number to proceed \n"
-                            )
+                            await ctx.send("\n-->Type 1 to drink \n-->Type other number to proceed \n")
 
                             await asyncio.sleep(TEMPO)
                             if not (self.bot.acoes) or ("stop" in self.bot.acoes):
@@ -520,27 +473,18 @@ class Games(commands.Cog, name="Games"):
                             if action != 1:
                                 await ctx.send(" \nYou leave the bottle behind...")
                             else:
-                                await ctx.send(
-                                    " \nYou drink the POISON!\n You feel weakened!"
-                                )
+                                await ctx.send(" \nYou drink the POISON!\n You feel weakened!")
                                 playerDEF = playerDEF - 2
                                 self.score = self.score + 2
-                                await ctx.send(
-                                    " Your DEF was decreased to " + str(playerDEF)
-                                )
+                                await ctx.send(" Your DEF was decreased to " + str(playerDEF))
 
                         # scroll
                         elif chest == 5:
                             action = 0
-                            await ctx.send(
-                                " You found a mysterious scroll!"
-                                + "\n Do you wish to read it?"
-                            )
+                            await ctx.send(" You found a mysterious scroll!" + "\n Do you wish to read it?")
 
                             # player decision
-                            await ctx.send(
-                                "\n-->Type 1 to read it \n-->Type other number to proceed \n"
-                            )
+                            await ctx.send("\n-->Type 1 to read it \n-->Type other number to proceed \n")
 
                             await asyncio.sleep(TEMPO)
                             if not (self.bot.acoes) or ("stop" in self.bot.acoes):
@@ -553,48 +497,35 @@ class Games(commands.Cog, name="Games"):
                             if action != 1:
                                 await ctx.send("\n You leave the scroll behind...")
                             else:
-                                await ctx.send(
-                                    "\n You read the magic scroll!\n You feel enchanted!"
-                                )
+                                await ctx.send("\n You read the magic scroll!\n You feel enchanted!")
                                 playerATK = playerATK + randint(1, 3)
                                 playerDEF = playerDEF + randint(1, 3)
                                 self.score = self.score + 2
-                                await ctx.send(
-                                    " Your ATK was increased to " + str(playerATK)
-                                )
-                                await ctx.send(
-                                    " Your DEF was increased to " + str(playerDEF)
-                                )
+                                await ctx.send(" Your ATK was increased to " + str(playerATK))
+                                await ctx.send(" Your DEF was increased to " + str(playerDEF))
 
                         # empty chest
                         elif chest == 6:
-                            await ctx.send(
-                                " The chest was empty!\n Better luck next time... "
-                            )
+                            await ctx.send(" The chest was empty!\n Better luck next time... ")
 
                 # ZAP ROOM
                 elif roomGen == 5:
                     if playerATK > 10 and playerDEF > 10 and counter > zapCount:
                         action = 0
-                        await ctx.send(
-                            "\n You enter the "
-                            + roomAdjective
-                            + " room"
-                            + "\n The room appears to empty"
-                        )
+                        await ctx.send("\n You enter the " + roomAdjective + " room" + "\n The room appears to empty")
 
-                        # await ctx.send("       |_ _       _  _           ")
-                        # await ctx.send("       | _ _   _|     _ _        ")
-                        # await ctx.send("     | | |    _ _     _ _        ")
-                        # await ctx.send("    /  |   _   _ |  _            ")
-                        # await ctx.send("   |   |_ _	_ _       |_ _      ")
-                        # await ctx.send("   /   |    _|    _      _ _     ")
-                        # await ctx.send("       |_ _ _ _ _ _ _ _ _ _ _    ")
-                        # await ctx.send("   /  /  ~.  .  ^   .    . ^     ")
-                        # await ctx.send("   | / . . .   ,    ^~   .  .    ")
-                        # await ctx.send("    /  . ^ , ~     .  ^ .     .  ")
-                        # await ctx.send("  |/  , . .     .      ^  .      ")
-                        # await ctx.send("  / .  ^    .   .  ^   ,  . ~    ")
+                        # await ctx.send("       |_ _       _  _           ")  # noqa: ERA001
+                        # await ctx.send("       | _ _   _|     _ _        ")  # noqa: ERA001
+                        # await ctx.send("     | | |    _ _     _ _        ")  # noqa: ERA001
+                        # await ctx.send("    /  |   _   _ |  _            ")  # noqa: ERA001
+                        # await ctx.send("   |   |_ _	_ _       |_ _      ")  # noqa: ERA001
+                        # await ctx.send("   /   |    _|    _      _ _     ")  # noqa: ERA001
+                        # await ctx.send("       |_ _ _ _ _ _ _ _ _ _ _    ")  # noqa: ERA001
+                        # await ctx.send("   /  /  ~.  .  ^   .    . ^     ")  # noqa: ERA001
+                        # await ctx.send("   | / . . .   ,    ^~   .  .    ")  # noqa: ERA001
+                        # await ctx.send("    /  . ^ , ~     .  ^ .     .  ")  # noqa: ERA001
+                        # await ctx.send("  |/  , . .     .      ^  .      ")  # noqa: ERA001
+                        # await ctx.send("  / .  ^    .   .  ^   ,  . ~    ")  # noqa: ERA001
 
                         counter = counter + 1
 
@@ -615,25 +546,20 @@ class Games(commands.Cog, name="Games"):
                         playerDEF = 3 + randint(1, 3)
                     else:
                         action = 0
-                        await ctx.send(
-                            "\n You enter the "
-                            + roomAdjective
-                            + " room"
-                            + "\n The room is empty"
-                        )
+                        await ctx.send("\n You enter the " + roomAdjective + " room" + "\n The room is empty")
 
-                        # await ctx.send("       |_ _       _  _           ")
-                        # await ctx.send("       | _ _   _|     _ _        ")
-                        # await ctx.send("     | | |    _ _     _ _        ")
-                        # await ctx.send("    /  |   _   _ |  _            ")
-                        # await ctx.send("   |   |_ _	_ _       |_ _      ")
-                        # await ctx.send("   /   |    _|    _      _ _     ")
-                        # await ctx.send("       |_ _ _ _ _ _ _ _ _ _ _    ")
-                        # await ctx.send("   /  /  ~.  .  ^   .    . ^     ")
-                        # await ctx.send("   | / . . .   ,    ^~   .  .    ")
-                        # await ctx.send("    /  . ^ , ~     .  ^ .     .  ")
-                        # await ctx.send("  |/  , . .     .      ^  .      ")
-                        # await ctx.send("  / .  ^    .   .  ^   ,  . ~    ")
+                        # await ctx.send("       |_ _       _  _           ")  # noqa: ERA001
+                        # await ctx.send("       | _ _   _|     _ _        ")  # noqa: ERA001
+                        # await ctx.send("     | | |    _ _     _ _        ")  # noqa: ERA001
+                        # await ctx.send("    /  |   _   _ |  _            ")  # noqa: ERA001
+                        # await ctx.send("   |   |_ _	_ _       |_ _      ")  # noqa: ERA001
+                        # await ctx.send("   /   |    _|    _      _ _     ")  # noqa: ERA001
+                        # await ctx.send("       |_ _ _ _ _ _ _ _ _ _ _    ")  # noqa: ERA001
+                        # await ctx.send("   /  /  ~.  .  ^   .    . ^     ")  # noqa: ERA001
+                        # await ctx.send("   | / . . .   ,    ^~   .  .    ")  # noqa: ERA001
+                        # await ctx.send("    /  . ^ , ~     .  ^ .     .  ")  # noqa: ERA001
+                        # await ctx.send("  |/  , . .     .      ^  .      ")  # noqa: ERA001
+                        # await ctx.send("  / .  ^    .   .  ^   ,  . ~    ")  # noqa: ERA001
 
                         counter = counter + 1
 
@@ -653,10 +579,7 @@ class Games(commands.Cog, name="Games"):
             if self.score < 0 and playerState == 0:
                 # for negative score
                 await ctx.send(
-                    "\n YOU ARE DEAD!"
-                    + "\n YOUR SCORE WAS negative "
-                    + str(self.score * -1)
-                    + "\n *Y*O*U***S*U*C*K*\n"
+                    "\n YOU ARE DEAD!" + "\n YOUR SCORE WAS negative " + str(self.score * -1) + "\n *Y*O*U***S*U*C*K*\n"
                 )
 
                 # try again or quit
@@ -715,17 +638,10 @@ class Games(commands.Cog, name="Games"):
                 else:
                     playerState = 0
 
-            elif (
-                self.score >= 100
-                and playerState != 0
-                and (playerATK > 90 or playerDEF > 90)
-            ):
+            elif self.score >= 100 and playerState != 0 and (playerATK > 90 or playerDEF > 90):
                 # for CHEATERS
                 await ctx.send(
-                    "\n YOU'RE A:"
-                    + "\n *C*H*E*A*T*E*R*\n"
-                    + " YOUR SCORE WAS ZERO"
-                    + " Cheaters NEVER win!\n"
+                    "\n YOU'RE A:" + "\n *C*H*E*A*T*E*R*\n" + " YOUR SCORE WAS ZERO" + " Cheaters NEVER win!\n"
                 )
 
                 # try again or quit
@@ -753,12 +669,7 @@ class Games(commands.Cog, name="Games"):
 
             elif playerState == 0:
                 # regular message
-                await ctx.send(
-                    "\n YOU ARE DEAD!"
-                    + " YOUR SCORE WAS "
-                    + str(self.score)
-                    + "\n *G*A*M*E***O*V*E*R*\n"
-                )
+                await ctx.send("\n YOU ARE DEAD!" + " YOUR SCORE WAS " + str(self.score) + "\n *G*A*M*E***O*V*E*R*\n")
 
                 # try again or quit
                 await ctx.send("\n Do you wish to try again?\n")

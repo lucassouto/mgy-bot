@@ -2,20 +2,22 @@
     Modulo para comandos de musica
 """
 from __future__ import annotations
-import os
+
 import asyncio
-import sys
+import logging
+import os
 import random
 import re
-import logging
+import sys
 from urllib.parse import parse_qs, urlparse
+
 import discord
-import yt_dlp
-import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
-from discord.ext import tasks, commands
 import googleapiclient.discovery
+import spotipy
+import yt_dlp
 from bs4 import BeautifulSoup
+from discord.ext import commands, tasks
+from spotipy.oauth2 import SpotifyClientCredentials
 
 from utils.pgdatabase import Postgres
 
@@ -74,7 +76,6 @@ youtube = googleapiclient.discovery.build(
 
 def switch(guild_id: int):
     """Switch case para pegar macro"""
-    print(guild_id)
     return {
         470710752789921803: os.environ["MACRO"],
         582709300506656792: os.environ["MACRO2"],
@@ -99,18 +100,14 @@ class YTDLSource(discord.PCMVolumeTransformer):
         """Retira informações da url"""
         loop = loop or asyncio.get_event_loop()
         try:
-            data = await loop.run_in_executor(
-                None, lambda: ytdl.extract_info(url, download=not stream)
-            )
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
 
             # Percorre a queue até encontrar um item valido
             while not data:
                 if queue[1]:
                     queue.pop(0)
                     url = queue[0]
-                    data = await loop.run_in_executor(
-                        None, lambda: ytdl.extract_info(url, download=not stream)
-                    )
+                    data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
                 else:
                     return None
                 if not data:
@@ -121,20 +118,16 @@ class YTDLSource(discord.PCMVolumeTransformer):
                 data = data["entries"][0]
 
             filename = data["url"] if stream else ytdl.prepare_filename(data)
-        except IndexError as error:
-            log.error("Lista vazia %s", str(error))
+        except IndexError:
+            log.exception("Lista vazia")
             return None
-        except Exception as e:
-            log.error(
-                "Erro ao adquirir video, tentando encontrar nova na lista. Erro: %s", e
-            )
+        except Exception:
+            log.exception("Erro ao adquirir video, tentando encontrar nova na lista.")
             raise
         if PERFORMANCE_MODE:
             return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
         else:
-            return cls(
-                discord.FFmpegPCMAudio(filename, **ffmpeg_options_loudnorm), data=data
-            )
+            return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options_loudnorm), data=data)
 
 
 class Music(commands.Cog):
@@ -181,8 +174,8 @@ class Music(commands.Cog):
                         await self.guild_voice_client[guild_id].disconnect()
                         self.queue[guild_id].clear()
                         self.guild_voice_client.pop(guild_id)
-                    except Exception as e:  # pylint: disable=broad-exception-caught
-                        log.error("Erro ao desconectar. %s", e, exc_info=1)
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        log.exception("Erro ao desconectar.")
             elif len(members) == 0:
                 self.queue[guild_id].clear()
                 self.guild_voice_client.pop(guild_id)
@@ -213,7 +206,6 @@ class Music(commands.Cog):
 
         if ctx.voice_client is not None:
             return await ctx.voice_client.move_to(channel)
-        # self.verifyalone.start(ctx)
         await channel.connect()
 
     async def randomizequeue(self, ctx: commands.Context):
@@ -254,20 +246,16 @@ class Music(commands.Cog):
                     tracks.extend(response["items"])
 
                 for item in tracks:
-                    self.queue[guild_id].append(
-                        item["track"]["artists"][0]["name"]
-                        + " "
-                        + item["track"]["name"]
-                    )
+                    self.queue[guild_id].append(item["track"]["artists"][0]["name"] + " " + item["track"]["name"])
 
                 log.info(self.queue)
                 break
-            except Exception as e:  # pylint: disable=broad-exception-caught
+            except Exception:  # pylint: disable=broad-exception-caught
                 # if erro 403
-                log.error("Erro ao spotify playlist: %s %s", str(tries), e)
+                log.exception("Erro ao spotify playlist")
                 await asyncio.sleep(2)  # delay para evitar too many requests
                 if tries >= 2:
-                    raise e
+                    raise
 
     async def playlist(self, guild_id: int, pagina: int):
         """Separa musicas da playlist utilizando api do youtube v3"""
@@ -277,26 +265,19 @@ class Music(commands.Cog):
         playlist_id = query["list"][0]
 
         # pylint: disable=no-member
-        request = youtube.playlistItems().list(
-            part="snippet", playlistId=playlist_id, maxResults=50
-        )
+        request = youtube.playlistItems().list(part="snippet", playlistId=playlist_id, maxResults=50)
         response = request.execute()
 
         playlist_items = []
         while request is not None:
             response = request.execute()
             playlist_items += response["items"]
-            request = youtube.playlistItems().list_next(
-                request, response
-            )  # pylint: disable=no-member
+            request = youtube.playlistItems().list_next(request, response)  # pylint: disable=no-member
 
         videos = []
         log.info("Total videos: %s", str(len(playlist_items)))
         for t in playlist_items:
-            videos.append(
-                "https://www.youtube.com/watch?v="
-                + t["snippet"]["resourceId"]["videoId"]
-            )
+            videos.append("https://www.youtube.com/watch?v=" + t["snippet"]["resourceId"]["videoId"])
 
         for v in videos:
             self.queue[guild_id].append(v)
@@ -313,8 +294,8 @@ class Music(commands.Cog):
             try:
                 if self.queue[ctx.guild.id]:
                     self.queue[ctx.guild.id].pop(0)
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                log.error("Erro ao retirar da lista %s", e, exc_info=1)
+            except Exception:  # pylint: disable=broad-exception-caught
+                log.exception("Erro ao retirar da lista")
 
             if ctx.voice_client:
                 # Se a lista não estiver vazia, toca o próximo, caso contrario disconecta
@@ -327,8 +308,8 @@ class Music(commands.Cog):
                 fut = asyncio.run_coroutine_threadsafe(coro, self.bot.loop)
                 try:
                     fut.result()
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    log.error("After executado com erro! %s", e, exc_info=1)
+                except Exception:  # pylint: disable=broad-exception-caught
+                    log.exception("After executado com erro!")
 
         if self.queue[ctx.guild.id]:
             async with ctx.typing():
@@ -339,8 +320,8 @@ class Music(commands.Cog):
                         loop=self.bot.loop,
                         stream=True,
                     )
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    log.error("Erro ao iniciar o player %s", e, exc_info=1)
+                except Exception:  # pylint: disable=broad-exception-caught
+                    log.exception("Erro ao iniciar o player")
                     player = None
                 if player:
                     # Inicia a tocar
@@ -395,9 +376,7 @@ class Music(commands.Cog):
                                 + "("
                                 + self.queue[ctx.guild.id][0]
                                 + ")"
-                                + "\n Duração: {:02d}:{:02d}".format(
-                                    int(minutes), int(seconds)
-                                ),
+                                + f"\n Duração: {int(minutes):02d}:{int(seconds):02d}",
                                 colour=0xFA00D4,
                             )
                             embed.set_footer(
@@ -408,8 +387,8 @@ class Music(commands.Cog):
                             await self.message[ctx.guild.id].edit(embed=embed)
                         else:
                             self.message[ctx.guild.id] = await ctx.send(embed=embed)
-                    except Exception as e:  # pylint: disable=broad-exception-caught
-                        log.error("Deu ruim ao tocar! %s", e, exc_info=1)
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        log.exception("Deu ruim ao tocar!")
 
     @commands.command(aliases=["vol", "v", "volmax", "maxvol"])
     async def volume(self, ctx: commands.Context, *args):
@@ -425,27 +404,23 @@ class Music(commands.Cog):
         if ctx.voice_client is None:
             return await ctx.send("O bot não está conectado em um canal de voz.")
         volume = 50
-        if args:
-            if args[0].isdigit():
-                if int(args[0]) > 0:
-                    volume = int(args[0])
+        if args and args[0].isdigit() and int(args[0]) > 0:
+            volume = int(args[0])
 
         if self.queue[ctx.guild.id][0] == "https://www.youtube.com/watch?v=Tu5-h4Ye0J0":
             ctx.voice_client.source.volume = sys.float_info.max
             await ctx.send("Lmao")
+        elif ("-m" in args or "max" in args or "-max" in args) or (
+            ctx.invoked_with.lower() == "volmax" or ctx.invoked_with.lower() == "maxvol"
+        ):
+            ctx.voice_client.source.volume = sys.float_info.max
+            await ctx.send("Dale")
+        elif "-r" in args or "reset" in args or "-reset" in args:
+            ctx.voice_client.source.volume = 50 / 100
+            await ctx.send("Volume resetado")
         else:
-            if ("-m" in args or "max" in args or "-max" in args) or (
-                ctx.invoked_with.lower() == "volmax"
-                or ctx.invoked_with.lower() == "maxvol"
-            ):
-                ctx.voice_client.source.volume = sys.float_info.max
-                await ctx.send("Dale")
-            elif "-r" in args or "reset" in args or "-reset" in args:
-                ctx.voice_client.source.volume = 50 / 100
-                await ctx.send("Volume resetado")
-            else:
-                ctx.voice_client.source.volume = volume / 100
-                await ctx.send("Volume trocado para {}%".format(volume))
+            ctx.voice_client.source.volume = volume / 100
+            await ctx.send(f"Volume trocado para {volume}%")
 
     @commands.command(aliases=["gvol", "gv", "gvolmax", "gmaxvol", "alwaysvolmax"])
     async def globalvolume(self, ctx: commands.Context, *args):
@@ -465,10 +440,8 @@ class Music(commands.Cog):
             self.global_vol[ctx.guild.id] = 50 / 100
 
         volume = 50
-        if args:
-            if args[0].isdigit():
-                if int(args[0]) > 0:
-                    volume = int(args[0])
+        if args and args[0].isdigit() and int(args[0]) > 0:
+            volume = int(args[0])
 
         if ("-m" in args or "max" in args or "-max" in args) or (
             ctx.invoked_with.lower() == "gvolmax"
@@ -484,7 +457,7 @@ class Music(commands.Cog):
             await ctx.send("Volume global resetado")
         else:
             self.global_vol[ctx.guild.id] = volume / 100
-            await ctx.send("Volume global trocado para {}%".format(volume))
+            await ctx.send(f"Volume global trocado para {volume}%")
 
         pending_command = self.bot.get_command("volume")
         await ctx.invoke(pending_command, str(volume))
@@ -511,30 +484,27 @@ class Music(commands.Cog):
                     self.queue[ctx.guild.id].insert(1, url)
                 else:
                     self.queue[ctx.guild.id].append(url)
-            else:  # É url
-                if re.search("spotify", url):
-                    await self.spotifyplaylist(ctx.guild.id, url)
-                elif re.search("playlist", url):
-                    await self.playlist(ctx.guild.id, url)
-                else:
-                    if "-f" in args:
-                        self.queue[ctx.guild.id].insert(1, url)
-                    else:
-                        self.queue[ctx.guild.id].append(url)
+            elif re.search("spotify", url):
+                await self.spotifyplaylist(ctx.guild.id, url)
+            elif re.search("playlist", url):
+                await self.playlist(ctx.guild.id, url)
+            elif "-f" in args:
+                self.queue[ctx.guild.id].insert(1, url)
+            else:
+                self.queue[ctx.guild.id].append(url)
 
             # Argumentos extra
             for item in args:
-                if item.startswith("-"):
-                    # Caso numero no fim, coloca n vezes na lista
-                    if item[1:].isdigit():
-                        log.info("Encontrado digito")
-                        for i in range(1, int(item[1:])):
-                            if i > MAX_NUM:
-                                break
-                            if "-f" in args:
-                                self.queue[ctx.guild.id].insert(1, url)
-                            else:
-                                self.queue[ctx.guild.id].append(url)
+                # Caso numero no fim, coloca n vezes na lista
+                if item.startswith("-") and item[1:].isdigit():
+                    log.info("Encontrado digito")
+                    for i in range(1, int(item[1:])):
+                        if i > MAX_NUM:
+                            break
+                        if "-f" in args:
+                            self.queue[ctx.guild.id].insert(1, url)
+                        else:
+                            self.queue[ctx.guild.id].append(url)
 
             # Se shuffle no comando, altera a ordem da lista
             if "-shuffle" in args:
@@ -544,11 +514,7 @@ class Music(commands.Cog):
         if ctx.voice_client.is_playing() or ctx.voice_client.is_paused():
             log.info("Esta tocando, adicionando a queue")
 
-            await ctx.send(
-                "```Adicionado à lista, posição: {}```".format(
-                    len(self.queue[ctx.guild.id]) - 1
-                )
-            )
+            await ctx.send(f"```Adicionado à lista, posição: {len(self.queue[ctx.guild.id]) - 1}```")
         else:
             log.info("Nao esta tocando, comecando agora")
 
@@ -559,22 +525,19 @@ class Music(commands.Cog):
         """Pausa a música"""
         if ctx.voice_client.is_playing():
             # Se for garagem da vizinha nao permite mudar o volume
-            if (
-                self.queue[ctx.guild.id][0]
-                == "https://www.youtube.com/watch?v=Tu5-h4Ye0J0"
-            ):
+            if self.queue[ctx.guild.id][0] == "https://www.youtube.com/watch?v=Tu5-h4Ye0J0":
                 ctx.voice_client.source.volume = sys.float_info.max
                 ctx.send("Lmao")
             else:
                 ctx.voice_client.pause()
-            await ctx.send("Pausado: `{}`".format(self.title[ctx.guild.id]))
+            await ctx.send(f"Pausado: `{self.title[ctx.guild.id]}`")
 
     @commands.command(aliases=["res"])
     async def resume(self, ctx: commands.Context):
         """Retorna a tocar música"""
         if ctx.voice_client.is_paused():
             ctx.voice_client.resume()
-            await ctx.send("Tocando: `{}`".format(self.title[ctx.guild.id]))
+            await ctx.send(f"Tocando: `{self.title[ctx.guild.id]}`")
 
     @commands.command(aliases=["skup", "ski", "next", "skyp"])
     async def skip(self, ctx: commands.Context, quantidade=1):
@@ -612,17 +575,13 @@ class Music(commands.Cog):
         try:
             if (
                 self.queue[ctx.guild.id]
-                and self.queue[ctx.guild.id][0]
-                == "https://www.youtube.com/watch?v=Tu5-h4Ye0J0"
+                and self.queue[ctx.guild.id][0] == "https://www.youtube.com/watch?v=Tu5-h4Ye0J0"
             ):
                 ctx.voice_client.source.volume = sys.float_info.max
                 await ctx.send("Lmao")
                 return
             log.info("%s terminou de tocar", self.title[ctx.guild.id])
-            if (
-                ctx.voice_client.is_playing()
-                and self.title[ctx.guild.id] == "Quim Barreiros - A garagem da vizinha"
-            ):
+            if ctx.voice_client.is_playing() and self.title[ctx.guild.id] == "Quim Barreiros - A garagem da vizinha":
                 ctx.voice_client.source.volume = sys.float_info.max
                 await ctx.send("Lmao")
             else:
@@ -630,8 +589,8 @@ class Music(commands.Cog):
                 self.queue[ctx.guild.id].clear()
                 log.info("Desconectou terminou de tocar")
                 await ctx.voice_client.disconnect()
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            log.error("Erro ao dar stop, %s", e, exc_info=1)
+        except Exception:  # pylint: disable=broad-exception-caught
+            log.exception("Erro ao dar stop")
             await ctx.voice_client.disconnect()
 
     @commands.command(aliases=["list", "queue"])
@@ -649,14 +608,7 @@ class Music(commands.Cog):
 
                 for x in self.queue[ctx.guild.id]:
                     info = ytdl.extract_info(x, download=False)
-                    if info:
-                        if info.get("title"):
-                            titulo = info.get("title")
-                        else:
-                            titulo = x
-                    else:
-                        titulo = "¯\_(ツ)_/¯"  # pylint: disable=anomalous-backslash-in-string # noqa: W605
-
+                    titulo = (info.get("title") if info.get("title") else x) if info else "¯\\_(ツ)_/¯"
                     lista += str(j) + ": " + titulo + "\n"
                     j += 1
 
@@ -679,9 +631,10 @@ class Music(commands.Cog):
         num - numero do mashup. Se usado com -r será o total de mashups à tocar
         -r - para random mashups
         """
-        # url = "https://www.dropbox.com/sh/kqtsijt5jyb5pzl/AABPrMl4zTBvF9BvESO45T1Ra"
+        # URL "https://www.dropbox.com/sh/kqtsijt5jyb5pzl/AABPrMl4zTBvF9BvESO45T1Ra"
         log.info("Iniciando busca por mashups")
-        soup = BeautifulSoup(open("Dropbox.html", encoding=str), features="lxml")
+        # TODO: Use Path().open()
+        soup = BeautifulSoup(open("Dropbox.html", encoding=str), features="lxml")  # noqa: SIM115,PTH123
 
         # pega todos os links da pagina
         mashups = []
@@ -694,12 +647,10 @@ class Music(commands.Cog):
         mashups.pop(0)
 
         num = "1"
-        if args:
-            if args[0].isdigit():
-                if int(args[0]) > 0:
-                    num = str(args[0])
-                    if int(num) > MAX_NUM:
-                        num = str(MAX_NUM)
+        if args and args[0].isdigit() and int(args[0]) > 0:
+            num = str(args[0])
+            if int(num) > MAX_NUM:
+                num = str(MAX_NUM)
         else:
             return await ctx.send("```" + ctx.command.help + "```")
 
@@ -712,7 +663,7 @@ class Music(commands.Cog):
 
             # coloca 'quantidade' ma lista
             for i in range(int(num)):
-                self.queue[ctx.guild.id].append((mashups[my_list[i]]))
+                self.queue[ctx.guild.id].append(mashups[my_list[i]])
 
             found = 1  # temp
         # Toca o mashup de numero num
@@ -739,11 +690,7 @@ class Music(commands.Cog):
         if found == 1:
             if ctx.voice_client.is_playing() or ctx.voice_client.is_paused():
                 log.info("Esta tocando, adicionando a queue")
-                await ctx.send(
-                    "```Adicionado {} à lista. Total na lista: {}```".format(
-                        num, len(self.queue[ctx.guild.id]) - 1
-                    )
-                )
+                await ctx.send(f"```Adicionado {num} à lista. Total na lista: {len(self.queue[ctx.guild.id]) - 1}```")
             else:
                 log.info("Nao esta tocando, comecando agora")
                 await self.tocar(ctx)
@@ -759,8 +706,8 @@ class Music(commands.Cog):
             self.queue[ctx.guild.id].clear()
             self.queue[ctx.guild.id].append(temp)
             await ctx.send("```Lista limpa```")
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            log.error("Erro ao limpar a lista %s", e, exc_info=1)
+        except Exception:  # pylint: disable=broad-exception-caught
+            log.exception("Erro ao limpar a lista")
 
     @commands.command(aliases=["random", "randomize", "shuff"])
     async def shuffle(self, ctx: commands.Context):
@@ -777,20 +724,16 @@ class Music(commands.Cog):
             if quan > MAX_NUM:
                 quan = MAX_NUM
             for _ in range(0, quan):
-                self.queue[ctx.guild.id].append(
-                    "https://www.youtube.com/watch?v=8xEJOUfMIHo"
-                )
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            log.error("Erro ao atribuir quantidade %s", e, exc_info=1)
+                self.queue[ctx.guild.id].append("https://www.youtube.com/watch?v=8xEJOUfMIHo")
+        except Exception:  # pylint: disable=broad-exception-caught
+            log.exception("Erro ao atribuir quantidade")
 
         await self.randomizequeue(ctx)
 
         if ctx.voice_client.is_playing() or ctx.voice_client.is_paused():
             log.info("Esta tocando, adicionando a queue")
             await ctx.send(
-                "```Adicionado {} Bonus Room à lista. Total na lista: {}```".format(
-                    quantidade, len(self.queue[ctx.guild.id]) - 1
-                )
+                f"```Adicionado {quantidade} Bonus Room à lista. Total na lista: {len(self.queue[ctx.guild.id]) - 1}```"
             )
         else:
             log.info("Nao esta tocando, comecando agora")
@@ -824,12 +767,12 @@ class Music(commands.Cog):
                     await self.spotifyplaylist(ctx.guild.id, url)
                 elif re.search("playlist", url):
                     await self.playlist(ctx.guild.id, url)
-                else:
+                else:  # noqa: PLR5501
                     if "-f" in args:
                         self.queue[ctx.guild.id].insert(1, url)
                     else:
                         self.queue[ctx.guild.id].append(url)
-            else:
+            else:  # noqa: PLR5501
                 if "-f" in args:
                     self.queue[ctx.guild.id].insert(1, url)
                 else:
@@ -837,17 +780,15 @@ class Music(commands.Cog):
 
             # Argumentos extra
             for item in args:
-                if item.startswith("-"):
-                    # Caso numero no fim, coloca n vezes na lista
-                    if item[1:].isdigit():
-                        log.info("Encontrado digito")
-                        for i in range(1, int(item[1:])):
-                            if i > MAX_NUM:
-                                break
-                            if "-f" in args:
-                                self.queue[ctx.guild.id].insert(1, url)
-                            else:
-                                self.queue[ctx.guild.id].append(url)
+                if item.startswith("-") and item[1:].isdigit():
+                    log.info("Encontrado digito")
+                    for i in range(1, int(item[1:])):
+                        if i > MAX_NUM:
+                            break
+                        if "-f" in args:
+                            self.queue[ctx.guild.id].insert(1, url)
+                        else:
+                            self.queue[ctx.guild.id].append(url)
             # Se shuffle no comando, altera a ordem da lista
             if "-shuffle" in args:
                 log.info("Aleatorio")
@@ -865,9 +806,7 @@ class Music(commands.Cog):
                 await self.tocar(ctx)
         # Musica nao encontrada
         else:
-            await ctx.send(
-                "Nome não encontrado. Você pode verificar os links existentes com: mgy musiclinks"
-            )
+            await ctx.send("Nome não encontrado. Você pode verificar os links existentes com: mgy musiclinks")
             await ctx.voice_client.disconnect()
 
     @commands.command()
@@ -889,12 +828,10 @@ class Music(commands.Cog):
 
             # Musica encontrada
             if resultado:
-                ctx.send(
-                    "Nome já existe. Você pode verificar os links existentes com: mgy musiclinks"
-                )
+                ctx.send("Nome já existe. Você pode verificar os links existentes com: mgy musiclinks")
 
             # Musica nao encontrada
-            else:
+            else:  # noqa: PLR5501
                 # Verifica se eh uma url, se nao for, completa o nome com args para pesquisa
                 if not await self.is_url(url):
                     await ctx.send("Url invalida")
@@ -908,9 +845,8 @@ class Music(commands.Cog):
                     if resultado:
                         info = ytdl.extract_info(url, download=False)
                         titulo = " "
-                        if info:
-                            if info.get("title"):
-                                titulo = info.get("title")
+                        if info and info.get("title"):
+                            titulo = info.get("title")
 
                         sql = "insert into MUSIC_LINKS (NAME, URL, USER_ID, TITLE)"
                         sql += (
@@ -926,14 +862,9 @@ class Music(commands.Cog):
                         )
                         try:
                             self.pg.update(sql)
-                            await ctx.send(
-                                "Adicionado "
-                                + str(name)
-                                + ". Para tocar use: mgy t "
-                                + str(name)
-                            )
-                        except Exception as e:  # pylint: disable=broad-exception-caught
-                            log.error("Erro ao adicionar link, %s", e, exc_info=1)
+                            await ctx.send("Adicionado " + str(name) + ". Para tocar use: mgy t " + str(name))
+                        except Exception:  # pylint: disable=broad-exception-caught
+                            log.exception("Erro ao adicionar link")
 
     @commands.command(aliases=["mlist", "mlinks", "links"])
     async def musiclinks(self, ctx: commands.Context):
@@ -947,9 +878,7 @@ class Music(commands.Cog):
                 titulo = []
 
                 for x in resultado:
-                    lista.append(
-                        "[" + str(x["name"]) + "]" + "(" + str(x["url"]) + ")" + "\n"
-                    )
+                    lista.append("[" + str(x["name"]) + "]" + "(" + str(x["url"]) + ")" + "\n")
                     if x["title"]:
                         titulo.append(str(x["title"]) + "\n")
                     else:
@@ -1007,15 +936,13 @@ class Music(commands.Cog):
         if ctx.voice_client is None:
             if ctx.author.voice:
                 # guarda o voice client para utilizar no verify alone
-                self.guild_voice_client[
-                    ctx.guild.id
-                ] = await ctx.author.voice.channel.connect()
+                self.guild_voice_client[ctx.guild.id] = await ctx.author.voice.channel.connect()
 
                 try:
                     if not self.verifyalone.is_running():  # pylint: disable=no-member
                         self.verifyalone.start()  # pylint: disable=no-member
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    log.error("Erro ao inicar tarefa em background, %s", e, exc_info=1)
+                except Exception:  # pylint: disable=broad-exception-caught
+                    log.exception("Erro ao inicar tarefa em background")
             else:
                 log.warning("Autor nao conectado no canal de voz")
                 await ctx.send("Você não está conectado em um canal de voz")

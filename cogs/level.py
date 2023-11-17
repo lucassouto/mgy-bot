@@ -1,19 +1,19 @@
 """
     Modulo cuidar dos niveis dos usuarios
 """
-import os
 import logging
-from datetime import datetime
-
-import discord
+import os
+from datetime import UTC, datetime
 from random import randint
 
+import discord
 from discord.ext import commands
 from discord.utils import get
 from sqlalchemy import ScalarResult
 
-from models import User, Server, Level as LevelModel
-from repositories import UserRepository, ServerRepository, LevelRepository
+from models import Level as LevelModel
+from models import Server, User
+from repositories import LevelRepository, ServerRepository, UserRepository
 
 log = logging.getLogger("Level")
 BASE = 10  # Toda mensagem ganha a xp base
@@ -24,7 +24,6 @@ MULTIPLER = 1.1  # O quanto de XP a mais precisa em comparação ao lvl anterior
 
 def switchGuild(guild_id: int):
     """Switch case para pegar macro"""
-    print(guild_id)
     return {
         470710752789921803: os.environ["MACRO"],
         582709300506656792: os.environ["MACRO2"],
@@ -47,7 +46,9 @@ class Level(commands.Cog, name="Level"):
         role = get(guild.roles, name=role_name)
         await discord_user.add_roles(role)
 
-    async def update_discord_role(self, discord_user: discord.Member, guild: discord.Guild, current_level: LevelModel, next_level: LevelModel):
+    async def update_discord_role(
+        self, discord_user: discord.Member, guild: discord.Guild, current_level: LevelModel, next_level: LevelModel
+    ):
         """Atualiza cargo"""
         current_role_name = current_level.name
         new_role_name = next_level.name
@@ -88,7 +89,9 @@ class Level(commands.Cog, name="Level"):
                 levels = await LevelRepository(session).filter(value=user.level.value + 1)
                 next_level = levels.first()
                 user: User = await UserRepository(session).update(pk=user.id, data={"level_id": next_level.id})
-                await self.update_discord_role(discord_user=discord_user, guild=guild, current_level=current_level, next_level=next_level)
+                await self.update_discord_role(
+                    discord_user=discord_user, guild=guild, current_level=current_level, next_level=next_level
+                )
                 session.refresh(user)
                 return True, user.level_id
         return False, user.level_id
@@ -111,9 +114,11 @@ class Level(commands.Cog, name="Level"):
                 "level_id": 1,
                 "experience": 0,
                 "total_messages": 0,
-                "updated_at": datetime.now(),
+                "updated_at": datetime.now(UTC),
             }
-            user: User = await UserRepository(session).create(data=data, )
+            user: User = await UserRepository(session).create(
+                data=data,
+            )
             log.info(f"Usuário {user.name} adicionado!")
 
             users: ScalarResult[User] = await UserRepository(session).filter(
@@ -188,12 +193,7 @@ class Level(commands.Cog, name="Level"):
             embed.add_field(name="Exp atual", value=user.experience)
             embed.add_field(
                 name="Próximo nível em",
-                value=str(
-                    int(
-                        (await self.prox_nivel(user.level_id))
-                        - user.experience
-                    )
-                ),
+                value=str(int((await self.prox_nivel(user.level_id)) - user.experience)),
             )
             embed.set_footer(
                 text=switchGuild(ctx.guild.id),

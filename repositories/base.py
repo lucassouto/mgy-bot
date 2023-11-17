@@ -1,9 +1,8 @@
 from abc import ABC
 
-from sqlalchemy import select, ScalarResult, update, insert, delete
+from sqlalchemy import ScalarResult, delete, insert, inspect, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy import inspect
 
 from models import BaseModel
 

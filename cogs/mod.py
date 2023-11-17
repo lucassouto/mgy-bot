@@ -3,8 +3,8 @@
 """
 import logging
 import os
-import sys
 import subprocess
+import sys
 
 import discord
 from discord import ChannelType
@@ -17,7 +17,6 @@ log = logging.getLogger("Mod")
 
 def switch(guild_id: int):
     """Switch case para pegar macro"""
-    print(guild_id)
     return {
         470710752789921803: os.environ["MACRO"],
         582709300506656792: os.environ["MACRO2"],
@@ -57,9 +56,7 @@ class Mod(commands.Cog, name="Mod"):
     async def restart(self, ctx: commands.Context):
         """Reset all"""
         await ctx.send("```Updating & restarting, aguarde uns 10-20s...```")
-        subprocess.check_call(
-            ["sudo", "python3", "-m", "pip", "install", "--upgrade", "yt_dlp"]
-        )
+        subprocess.check_call(["sudo", "python3", "-m", "pip", "install", "--upgrade", "yt_dlp"])
         os.execl(sys.executable, sys.executable, *sys.argv)
 
     @commands.command(hidden=True)
@@ -81,7 +78,6 @@ class Mod(commands.Cog, name="Mod"):
         )
 
         await ctx.message.delete()
-        print(await ctx.guild.fetch_member(user_id))
         user_obj = await ctx.guild.fetch_member(user_id)
         await user_obj.move_to(channel)
 
@@ -106,13 +102,13 @@ class Mod(commands.Cog, name="Mod"):
             await ctx.author.voice.channel.edit(rtc_region=new_reg)
             await ctx.send("Alterado para região: " + new_reg)
             log.info("Alterado para região: %d", new_reg)
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except
             await ctx.send(
                 "```Erro ao alterar para a regiao: "
                 + new_reg
                 + ". Verifique as permissões e que está conectado em um canal de voz```"
             )
-            log.error(error)
+            raise
 
     @commands.command(aliases=["inf"])
     async def info(self, ctx: commands.Context):
@@ -123,10 +119,7 @@ class Mod(commands.Cog, name="Mod"):
         count = 0
         total = 0
         links = ""
-        if ctx.message.mentions:
-            mention = ctx.message.mentions[0]
-        else:
-            mention = ctx.author
+        mention = ctx.message.mentions[0] if ctx.message.mentions else ctx.author
 
         sql = "select * from USUARIOS,NIVEIS,SERVIDORES"
         sql += " WHERE USER_ID_DISCORD = '" + str(mention.id) + "'"
@@ -150,9 +143,7 @@ class Mod(commands.Cog, name="Mod"):
                 links += ", [" + field[0] + "]" + "(" + field[1] + ")"
 
         embed = discord.Embed(colour=mention.color)
-        embed.set_author(
-            name=mention.name, url=mention.avatar.url, icon_url=mention.avatar.url
-        )
+        embed.set_author(name=mention.name, url=mention.avatar.url, icon_url=mention.avatar.url)
 
         embed.add_field(name="Mensagens eviadas", value="Calculando...")
         embed.add_field(
@@ -193,7 +184,6 @@ class Mod(commands.Cog, name="Mod"):
         # TODO - Separar no canal  atual, e total de todos
         embed.set_field_at(index=0, name="Mensagens enviadas", value=str(count))
         # TODO - Info do canal/server
-        # embed.set_field_at(index=1, name="Total", value=str(total))
         if message:
             await message.edit(embed=embed)
 
@@ -201,15 +191,9 @@ class Mod(commands.Cog, name="Mod"):
     async def update(
         self,
         ctx: commands.Context,
-        column: str = commands.parameter(
-            description="youtube | twitch | twitter | instagram | outros"
-        ),
-        arg1: str = commands.parameter(
-            description="Seu link. Ou caso esteja inserindo 'outros', o nome do site"
-        ),
-        arg2=commands.parameter(
-            default=None, description="O link caso esteja inserindo em 'outros'"
-        ),
+        column: str = commands.parameter(description="youtube | twitch | twitter | instagram | outros"),
+        arg1: str = commands.parameter(description="Seu link. Ou caso esteja inserindo 'outros', o nome do site"),
+        arg2=commands.parameter(default=None, description="O link caso esteja inserindo em 'outros'"),
     ):
         """Permite dar update nos seus links.
 
@@ -250,9 +234,7 @@ class Mod(commands.Cog, name="Mod"):
 
     @commands.command(aliases=["git", "dev"])
     async def github(self, ctx: commands.Context):
-        await ctx.send(
-            "Colabore com o desenvolvimento do bot: https://github.com/ulf881/mgy-bot"
-        )
+        await ctx.send("Colabore com o desenvolvimento do bot: https://github.com/ulf881/mgy-bot")
 
 
 async def setup(bot: commands.Bot):

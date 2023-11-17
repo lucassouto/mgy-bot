@@ -1,8 +1,5 @@
 from decouple import config
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 DB_USER = config("DB_USER", default="user")
 DB_PASS = config("DB_PASS", default="pass")

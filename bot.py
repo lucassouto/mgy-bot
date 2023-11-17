@@ -1,19 +1,20 @@
 """
     Bot MGY para discord, toca musica e zoa com o max
 """
-import sys
 import asyncio
 import logging
+import os
+import sys
+
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from utils import logger, __program__  # pylint: disable=unused-import # noqa: F401
+from database import SessionLocal
+from utils import __program__, logger  # pylint: disable=unused-import # noqa: F401
 from utils.cmdline import banner
 from utils.pgdatabase import Postgres
-import os
-from dotenv import load_dotenv
-from database import SessionLocal
 
 load_dotenv(override=True)
 
@@ -84,9 +85,7 @@ log = logging.getLogger("main")
 async def main():
     """Main"""
 
-    log.debug(
-        "##################### Iniciando %s #########################", __program__
-    )
+    log.debug("##################### Iniciando %s #########################", __program__)
 
     banner()
 
@@ -113,9 +112,6 @@ async def on_ready():
         bot.user.id,
         discord.__version__,
     )
-
-    # for guild in bot.guilds:
-    #     print(guild.id)
 
     # Changes Playing Status. type=1(streaming) for a standard game you could remove type and url.
     await bot.change_presence(activity=discord.Game(name=os.environ["NAME"], type=1))

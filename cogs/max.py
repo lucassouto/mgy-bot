@@ -3,6 +3,7 @@
 """
 import io
 import logging
+
 import aiohttp
 import discord
 from discord.ext import commands
@@ -26,14 +27,13 @@ class Max(commands.Cog, name="MaxGay"):
     @commands.command(aliases=["image", "imagem", "img", "fota"])
     async def frota(self, ctx: commands.Context):
         """Mostra imagem do frota"""
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://i.imgur.com/dvWqqcz.png") as resp:
-                if resp.status != 200:
-                    log.error("Erro ao enviar a mensagem do frota")
-                    return await ctx.channel.send(
-                        "Deu ruim ao carregar a imagem, mas o max é gay e gosta do leite do frota"
-                    )
-                data = io.BytesIO(await resp.read())
+        async with aiohttp.ClientSession() as session, session.get("https://i.imgur.com/dvWqqcz.png") as resp:
+            if resp.status != 200:
+                log.error("Erro ao enviar a mensagem do frota")
+                return await ctx.channel.send(
+                    "Deu ruim ao carregar a imagem, mas o max é gay e gosta do leite do frota"
+                )
+            data = io.BytesIO(await resp.read())
         # Deleta o comando
         await ctx.message.delete()
         await ctx.channel.send(file=discord.File(data, "cool_image.png"))
@@ -41,14 +41,13 @@ class Max(commands.Cog, name="MaxGay"):
     @commands.command(aliases=["image2", "imagem2", "img2", "drowns", "down"])
     async def drown(self, ctx: commands.Context):
         """Mostra imagem do max drowns in cum"""
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://i.imgur.com/dsUPTgY.png") as resp:
-                if resp.status != 200:
-                    log.error("Erro ao enviar a mensagem do drowns in cum")
-                    return await ctx.channel.send(
-                        "Deu ruim ao carregar a imagem, mas o max é gay e gosta do leite do frota"
-                    )
-                data = io.BytesIO(await resp.read())
+        async with aiohttp.ClientSession() as session, session.get("https://i.imgur.com/dsUPTgY.png") as resp:
+            if resp.status != 200:
+                log.error("Erro ao enviar a mensagem do drowns in cum")
+                return await ctx.channel.send(
+                    "Deu ruim ao carregar a imagem, mas o max é gay e gosta do leite do frota"
+                )
+            data = io.BytesIO(await resp.read())
         # Deleta o comando
         await ctx.message.delete()
         await ctx.channel.send(file=discord.File(data, "cool_image.png"))

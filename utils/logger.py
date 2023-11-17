@@ -4,16 +4,12 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-# from logging.handlers import RotatingFileHandler
-
 logging.raiseExceptions = False
 
 log = logging.getLogger("")
 log.setLevel(logging.DEBUG)
 
-log_formatter = logging.Formatter(
-    "%(asctime)s - %(levelname)s - %(name)s[%(funcName)s(%(lineno)d)] - %(message)s"
-)
+log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(name)s[%(funcName)s(%(lineno)d)] - %(message)s")
 
 # define a Handler which writes INFO messages or higher to the sys.stderr
 console = logging.StreamHandler()

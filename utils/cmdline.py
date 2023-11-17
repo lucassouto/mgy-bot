@@ -1,8 +1,12 @@
+# ruff: noqa: T201
+
 """
     Prepara argumentos e banner do programa
 """
+
 import logging
-from utils import __version__, __program__, __author__, __email__
+
+from utils import __author__, __email__, __program__, __version__
 
 log = logging.getLogger("cmdline")
 

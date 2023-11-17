@@ -1,10 +1,10 @@
-# TODO
+# ruff: noqa: T201
 
 import os
-import requests
-from flask import request
-from flask import Flask
 import threading
+
+import requests
+from flask import Flask, request
 
 app = Flask(__name__)
 
@@ -17,7 +17,7 @@ def entry_point():
 
 @app.route("/my_webhook/<user_id>")
 def my_webhook(user_id):
-    # check_secret(request) # sha256 of your secret and content-length
+    # check_secret request # sha256 of your secret and content-length
     data = request.get_json()["data"]
     print(data)
     if len(data) > 0:
@@ -73,4 +73,3 @@ if __name__ == "__main__":
     subscribe_to_webhook("628391901")
     subscribe_to_webhook("184970008")
     subscribe_to_webhook("256864977")
-    # app.run(host="::")
