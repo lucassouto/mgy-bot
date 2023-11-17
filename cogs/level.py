@@ -22,14 +22,6 @@ MAX_LEVEL = 51  # Nivel máximo
 MULTIPLER = 1.1  # O quanto de XP a mais precisa em comparação ao lvl anterior
 
 
-def switchGuild(guild_id: int):
-    """Switch case para pegar macro"""
-    return {
-        470710752789921803: os.environ["MACRO"],
-        582709300506656792: os.environ["MACRO2"],
-    }.get(guild_id, "MGY")
-
-
 class LevelException(Exception):
     ...
 
@@ -93,8 +85,8 @@ class Level(commands.Cog, name="Level"):
                     discord_user=discord_user, guild=guild, current_level=current_level, next_level=next_level
                 )
                 session.refresh(user)
-                return True, user.level_id
-        return False, user.level_id
+                return True, next_level.value
+        return False, user.level.value
 
     async def insert_user(self, guild: discord.Guild, author: discord.Member) -> User:
         log.info("Inserindo usuário")
@@ -165,6 +157,13 @@ class Level(commands.Cog, name="Level"):
     async def experience(self, ctx: commands.Context):
         """Mostra o nivel e experiencia atual"""
 
+        def switch_guild(guild_id: int):
+            """Switch case para pegar macro"""
+            return {
+                470710752789921803: os.environ["MACRO"],
+                582709300506656792: os.environ["MACRO2"],
+            }.get(guild_id, "MGY")
+
         async with self.bot.session as session:
             users: ScalarResult[User] = await UserRepository(session).filter(
                 discord_user_id=str(ctx.author.id), load_relationship=True
@@ -189,14 +188,14 @@ class Level(commands.Cog, name="Level"):
                 icon_url=ctx.author.avatar.url,
             )
 
-            embed.add_field(name="Level atual", value=f"{user.level_id} - {user.level.name}")
+            embed.add_field(name="Level atual", value=f"{user.level.value} - {user.level.name}")
             embed.add_field(name="Exp atual", value=user.experience)
             embed.add_field(
                 name="Próximo nível em",
-                value=str(int((await self.prox_nivel(user.level_id)) - user.experience)),
+                value=str(int((await self.prox_nivel(user.level.value)) - user.experience)),
             )
             embed.set_footer(
-                text=switchGuild(ctx.guild.id),
+                text=switch_guild(ctx.guild.id),
                 icon_url="https://cdn.discordapp.com/avatars/596088044877119507/0d26138b572e7dfffc6cab54073cdb31.webp",
             )
             await ctx.send(embed=embed)

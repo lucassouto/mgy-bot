@@ -75,10 +75,10 @@ class Eventos(commands.Cog, name="Eventos"):
         if not message.author.bot:
             await self.level.update_total_messages(message)
             if await self.delay(message.author.id):
-                evoluiu, level_id = await self.level.update(message)
+                evoluiu, level = await self.level.update(message)
                 if evoluiu:
                     await default_channel.send(
-                        f"Finalmente {message.author.mention} upou para o nível {level_id}! Glória a Deuxxx"
+                        f"Finalmente {message.author.mention} upou para o nível {level}! Glória a Deuxxx"
                     )
 
         # Detectada mensagem do Max
