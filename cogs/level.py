@@ -3,13 +3,18 @@
 """
 import os
 import logging
+from datetime import datetime
+
 import discord
 from random import randint
 
 from discord.ext import commands
 from discord.utils import get
+from sqlalchemy import ScalarResult
 
+from models import User, Server
 from utils.pgdatabase import Postgres
+from repositories import UserRepository, ServerRepository
 
 log = logging.getLogger("Level")
 BASE = 10  # Toda mensagem ganha a xp base
@@ -86,55 +91,36 @@ def switch(x):
     }.get(x, "")
 
 
+class LevelException(Exception):
+    ...
+
+
 class Level(commands.Cog, name="Level"):
     """
     Classe para cuidar dos eventos de level
     """
 
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot):
         self.bot = bot
-        self.pg = Postgres()
 
-    async def update_role(
-        self, user: discord.Member, role_atual: int, guild: discord.Guild
-    ):
+    async def set_discord_role(self, role_name: str, discord_user: discord.Member, guild: discord.Guild):
+        role = get(guild.roles, name=role_name)
+        await discord_user.add_roles(role)
+
+    async def update_discord_role(self, discord_user: discord.Member, user: User, guild: discord.Guild):
         """Atualiza cargo"""
-        role = get(guild.roles, name="")
-        new_role = switch(str(role_atual + 1))
-        curr_role = switch(str(role_atual))
-        if new_role:
-            if curr_role:
-                if new_role != curr_role:
-                    log.info(
-                        "atualizando cargo de: "
-                        + str(role_atual)
-                        + " para: "
-                        + str(role_atual + 1)
-                    )
-                    try:
-                        role = get(guild.roles, name=new_role)
-                        if not role:
-                            role = await guild.create_role(
-                                name=new_role,
-                                colour=discord.Colour(0x992D22),
-                                hoist=True,
-                            )
-                            # role.hoist = True
-                        await user.add_roles(role)
-                    except Exception as e:
-                        log.error("Erro ao atribuir cargo, " + str(e))
-                        pass
-                    try:
-                        role = get(guild.roles, name=curr_role)
-                        if role and (role_atual != 0):
-                            await user.remove_roles(role)
-                    except Exception as e:
-                        log.error("Erro ao remover cargo, " + str(e))
-                        pass
+        current_role_name = switch(str(user.level_id))
+        new_role_name = switch(str(user.level_id + 1))
+        if current_role_name != new_role_name:
+            log.info(f"Atualizando cargo de: {current_role_name} para {new_role_name}")
+            new_role = get(guild.roles, name=new_role_name)
+            await discord_user.add_roles(new_role)
+
+            current_role = get(guild.roles, name=current_role_name)
+            await discord_user.remove_roles(current_role)
 
     async def prox_nivel(self, nivel_atual: int):
         """Verifica a quantidade de exp pro proximo nivel"""
-        nextl = 0
         nivel = 1000
         total = 1000  # level 1
         for i in range(1, nivel_atual):
@@ -142,182 +128,122 @@ class Level(commands.Cog, name="Level"):
             nextl = nextl - nivel
             nivel += nextl
             total += nivel
-            # Para ver a tabela de levels:
-            # lista.append(
-            #     {
-            #         "nivel": i,
-            #         "xp": int(total - nivel - nivel + nextl),  # xp minima pro lvl
-            #         "próx": int(nivel - nextl),  # total necessário pro próx nivel
-            #         "a mais": int(nextl),  # mais que o anterior
-            #         # "max": int(total - nivel),
-            #     }
-            # )
 
         return total
 
-    async def find_user(self, author: int, guild: int):
-        """Consulta usuario"""
-        if not self.pg:
-            return
-        sql = "select * from USUARIOS,NIVEIS,SERVIDORES"
-        sql += " WHERE USER_ID_DISCORD = '" + str(author) + "'"
-        sql += " AND NUMERO_ID_SERVIDOR = '" + str(guild) + "'"
-        sql += " and NIVEL_ID = NIVEIS.ID_NIVEIS"
-        sql += " and SERVIDOR_ID = SERVIDORES.ID_SERVIDORES"
+    async def update_experience(self, user: User):
+        experience = int(BASE + randint(0, MAX_RAND + int(user.level_id * 0.5)))
 
-        resultado = self.pg.query(sql)
-        return resultado
-
-    async def update_user(self, info, user: discord.Member, guild: discord.Guild):
-        """atualiza exp e evolui"""
-        if not self.pg:
-            return
-        level_atual = int(info[0]["nivel_id"])
-        result = 0
-        experiencia = int(BASE + randint(0, MAX_RAND + int(level_atual * 0.5)))
         if self.bot.bonusXP:
-            experiencia *= 2
-        experiencia_atual = int(info[0]["experiencia"])
+            experience *= 2
 
-        # Prepara sql para atualizar exp
-        sql = (
-            "update usuarios set experiencia = '"
-            + str(experiencia_atual + experiencia)
-            + "'"
-        )
+        async with self.bot.session as session:
+            await UserRepository(session).update(pk=user.id, data={"experience": user.experience + experience})
 
-        # Verifica se evoluiu
-        experiencia_necessaria = await self.prox_nivel(level_atual)
-        if (experiencia_atual + experiencia) >= int(experiencia_necessaria):
-            # Verifica se nao esta no nivel maximo
-            if level_atual < MAX_LEVEL:
-                sql += ", nivel_id = " + str(level_atual + 1)  # Evolui
-                result = level_atual + 1
-                await self.update_role(user, info[0]["nivel_id"], guild)
+    async def evolve_user(self, user: User, discord_user: discord.Member, guild: discord.Guild) -> tuple[bool, int]:
+        experience_required = await self.prox_nivel(user.level_id)
+        if user.experience >= experience_required and user.level_id < MAX_LEVEL:
+            async with self.bot.session as session:
+                user: User = await UserRepository(session).update(pk=user.id, data={"level_id": user.level_id + 1})
+                await self.update_discord_role(discord_user=discord_user, user=user, guild=guild)
+                session.refresh(user)
+                return True, user.level_id
+        return False, user.level_id
 
-        # Atualiza total de menagens
-        sql += ", TOTAL_MENSAGENS = " + str(int(info[0]["total_mensagens"]) + 1)
-        sql += " where id_usuarios = " + str(info[0]["id_usuarios"])
+    async def insert_user(self, guild: discord.Guild, author: discord.Member) -> User:
+        log.info("Inserindo usuário")
+        async with self.bot.session as session:
+            servers: ScalarResult[Server] = await ServerRepository(session).filter(discord_id=str(guild.id))
+            server = servers.first()
 
-        self.pg.update(sql)
-        return result
+            if not server:
+                error = f"Servidor {guild.name} não encontrado"
+                log.error(error)
+                raise LevelException(error)
 
-    async def insere_usuario(self, guild: discord.Guild, author: discord.Member):
-        """Insere usuario"""
-        if not self.pg:
-            return
-        log.info("Inserindo usuario")
-        # busca id_servidor
-        sql = "select * from SERVIDORES"
-        sql += " WHERE NUMERO_ID_SERVIDOR = '" + str(guild.id) + "'"
+            data = {
+                "name": author.name,
+                "discord_user_id": str(author.id),
+                "server_id": server.id,
+                "level_id": 1,
+                "experience": 0,
+                "total_messages": 0,
+                "updated_at": datetime.now(),
+            }
+            user: User = await UserRepository(session).create(data=data)
+            log.info(f"Usuário {user.name} adicionado!")
+            await self.set_discord_role(role_name="Rookies (lvl 1 - 5)", discord_user=author, guild=guild)
+            return user
 
-        resultado = self.pg.query(sql)
-
-        # Guild deve ser inserida antes no bd
-        if not resultado:
-            try:
-                log.info("Inserindo usuario em " + str(guild.id))
-                sql = "insert into SERVIDORES (NOME_SERVIDOR, NUMERO_ID_SERVIDOR)"
-                sql += " values ('" + str(guild.name) + "', '" + str(guild.id) + "')"
-
-                self.pg.update(sql)
-                log.info("Guild " + guild.name + "adicionada")
-            except Exception as e:
-                log.error("Erro ao inserir guild " + str(e))
-                raise
-        else:
-            sql = "insert into USUARIOS (NOME_USUARIO, USER_ID_DISCORD, NIVEL_ID, EXPERIENCIA, SERVIDOR_ID)"
-            sql += (
-                " values ('"
-                + str(author.name)
-                + "', '"
-                + str(author.id)
-                + "', 1, 0,"
-                + str(resultado[0]["id_servidores"])
-                + ")"
-            )
-            try:
-                self.pg.update(sql)
-                log.info("Usuario " + author.name + " adicionado")
-                await self.update_role(author, 0, guild)
-
-            except Exception as e:
-                log.error("Erro ao inserir usuario " + str(e))
-                raise
-
-    async def update_total_messages(self, message: discord.Message):
+    async def update_total_messages(self, message: discord.Message) -> None:
         """soma 1 na quantidade de mensagens do usuario"""
-        if not self.pg:
-            return
-        resultado = await self.find_user(message.author.id, message.guild.id)
-        if resultado:
-            sql = "update usuarios set TOTAL_MENSAGENS = "
-            sql += str(int(resultado[0]["total_mensagens"]) + 1)
-            sql += " where id_usuarios = " + str(resultado[0]["id_usuarios"])
+        async with self.bot.session as session:
+            users: ScalarResult[User] = await UserRepository(session).filter(
+                discord_user_id=str(message.author.id), load_relationship=True
+            )
+            user = users.first()
+            await self.set_discord_role(role_name="Rookies (lvl 1 - 5)", discord_user=message.author, guild=message.guild)
 
-            self.pg.update(sql)
+            if not user:
+                log.error("Usuário não encontrado")
+                log.info("Inserindo usuário")
+                user = await self.insert_user(guild=message.guild, author=message.author)
 
-    async def update(self, message: discord.Message):
+            await UserRepository(session).update(pk=user.id, data={"total_messages": user.total_messages + 1})
+
+    async def update(self, message: discord.Message) -> tuple[bool, int]:
         """Atualiza"""
-        if not self.pg:
-            return
-        try:
-            result = 0
-            # Consulta para buscar informacoes do usuario que enviou a mensagem
-            resultado = await self.find_user(message.author.id, message.guild.id)
+        async with self.bot.session as session:
+            users: ScalarResult[User] = await UserRepository(session).filter(
+                discord_user_id=str(message.author.id), load_relationship=True
+            )
+            user = users.first()
 
-            # Usuario encontrado
-            if resultado:
-                # atualiza exp e evolui
-                try:
-                    result = await self.update_user(
-                        resultado, message.author, message.guild
-                    )
+            if not user:
+                log.error("Usuário não encontrado")
+                log.info("Inserindo usuário")
+                user = await self.insert_user(guild=message.guild, author=message.author)
 
-                except Exception as error:
-                    log.error(
-                        "Error while connecting to PostgreSQL, %s", error, exc_info=1
-                    )
-                    pass
-            # Usuario nao encontrado, necessario criar
-            else:
-                await self.insere_usuario(message.guild, message.author)
-        except Exception as error:
-            log.error("Erro ao buscar o usuario, %s", error, exc_info=1)
-        finally:
-            return result
+            await self.update_experience(user=user)
+            await session.refresh(user)
+            evolved, level = await self.evolve_user(user=user, discord_user=message.author, guild=message.guild)
+            return evolved, level
 
     @commands.command(aliases=["exp", "experiencia", "xp"])
     async def experience(self, ctx: commands.Context):
         """Mostra o nivel e experiencia atual"""
-        if not self.pg:
-            return
-        # Consulta para buscar informacoes do usuario que enviou a mensagem
-        resultado = await self.find_user(ctx.author.id, ctx.guild.id)
-        log.info("Buscando exp do usuario")
-        # Usuario encontrado
-        if resultado:
-            experiencia_atual = int(resultado[0]["experiencia"])
-            level_atual = str(resultado[0]["nome_nivel"])
-            level_atual_num = str(resultado[0]["nivel_id"])
+
+        async with self.bot.session as session:
+            users: ScalarResult[User] = await UserRepository(session).filter(
+                discord_user_id=str(ctx.author.id), load_relationship=True
+            )
+            user = users.first()
+
+            if not user:
+                await ctx.send("Usuário não encontrado")
+
+            if user.server.discord_id != str(ctx.guild.id):
+                error = f"Usuário {user.name} não pertence a esse servidor"
+                log.error(error)
+                raise LevelException(error)
+
+            log.info("Buscando exp do usuário")
+
             embed = discord.Embed(colour=0xFA00D4)
             embed.set_author(
                 name=ctx.author.name,
                 url="https://www.youtube.com/watch?v=Tu5-h4Ye0J0",
                 icon_url=ctx.author.avatar.url,
             )
-            # embed.set_image(url='https://cdn.discordapp.com/attachments/84319995256905728/252292324967710721/embed.png')
 
-            embed.add_field(
-                name="Level atual", value=level_atual_num + " - " + level_atual
-            )
-            embed.add_field(name="Exp atual", value=str(experiencia_atual))
+            embed.add_field(name="Level atual", value=f"{user.level_id} - {user.level.name}")
+            embed.add_field(name="Exp atual", value=user.experience)
             embed.add_field(
                 name="Próximo nível em",
                 value=str(
                     int(
-                        (await self.prox_nivel(resultado[0]["nivel_id"]))
-                        - experiencia_atual
+                        (await self.prox_nivel(user.level_id))
+                        - user.experience
                     )
                 ),
             )
@@ -326,10 +252,8 @@ class Level(commands.Cog, name="Level"):
                 icon_url="https://cdn.discordapp.com/avatars/596088044877119507/0d26138b572e7dfffc6cab54073cdb31.webp",
             )
             await ctx.send(embed=embed)
-        else:
-            await ctx.send("Usuario não encontrado")
 
 
-async def setup(bot: commands.Bot):
+async def setup(bot):
     """Adiciona cog ao bot"""
     await bot.add_cog(Level(bot))

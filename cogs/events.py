@@ -76,18 +76,13 @@ class Eventos(commands.Cog, name="Eventos"):
 
         # Verifica BOT, DELAY e executa atualizacao de xp, exibe msg level up se necessaria
         if not message.author.bot:
+            await self.level.update_total_messages(message)
             if await self.delay(message.author.id):
-                evoluiu = await self.level.update(message)
+                evoluiu, level_id = await self.level.update(message)
                 if evoluiu:
                     await default_channel.send(
-                        "Finalmente "
-                        + message.author.mention
-                        + " upou para o nível "
-                        + str(evoluiu)
-                        + "! Glória a Deuxxx"
+                        f"Finalmente {message.author.mention} upou para o nível {level_id}! Glória a Deuxxx"
                     )
-            else:  # atualiza apenas total de mensagens
-                await self.level.update_total_messages(message)
 
         # Detectada mensagem do Max
         if message.author.id == 229043445010923520:
