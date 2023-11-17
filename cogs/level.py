@@ -12,9 +12,8 @@ from discord.ext import commands
 from discord.utils import get
 from sqlalchemy import ScalarResult
 
-from models import User, Server
-from utils.pgdatabase import Postgres
-from repositories import UserRepository, ServerRepository
+from models import User, Server, Level as LevelModel
+from repositories import UserRepository, ServerRepository, LevelRepository
 
 log = logging.getLogger("Level")
 BASE = 10  # Toda mensagem ganha a xp base
@@ -30,65 +29,6 @@ def switchGuild(guild_id: int):
         470710752789921803: os.environ["MACRO"],
         582709300506656792: os.environ["MACRO2"],
     }.get(guild_id, "MGY")
-
-
-def switch(x):
-    """Switch case para pegar o novo cargo"""
-    return {
-        "0": "sem role",
-        "1": "Rookies (lvl 1 - 5)",
-        "2": "Rookies (lvl 1 - 5)",
-        "3": "Rookies (lvl 1 - 5)",
-        "4": "Rookies (lvl 1 - 5)",
-        "5": "Rookies (Lvl 1 - 5)",
-        "6": "Adventurers (lvl 6 - 10)",
-        "7": "Adventurers (lvl 6 - 10)",
-        "8": "Adventurers (lvl 6 - 10)",
-        "9": "Adventurers (lvl 6 - 10)",
-        "10": "Adventurers (lvl 6 - 10)",
-        "11": "Veterans (lvl 11 - 15)",
-        "12": "Veterans (lvl 11 - 15)",
-        "13": "Veterans (lvl 11 - 15)",
-        "14": "Veterans (lvl 11 - 15)",
-        "15": "Veterans (lvl 11 - 15)",
-        "16": "Monarchs (Lvl 16 - 20)",
-        "17": "Monarchs (Lvl 16 - 20)",
-        "18": "Monarchs (Lvl 16 - 20)",
-        "19": "Monarchs (Lvl 16 - 20)",
-        "20": "Monarchs (Lvl 16 - 20)",
-        "21": "Kings (Lvl 21 - 25)",
-        "22": "Kings (Lvl 21 - 25)",
-        "23": "Kings (Lvl 21 - 25)",
-        "24": "Kings (Lvl 21 - 25)",
-        "25": "Kings (Lvl 21 - 25)",
-        "26": "Emperors (Lvl 26 - 30)",
-        "27": "Emperors (Lvl 26 - 30)",
-        "28": "Emperors (Lvl 26 - 30)",
-        "29": "Emperors (Lvl 26 - 30)",
-        "30": "Emperors (Lvl 26 - 30)",
-        "31": "The Living Legends (Lvl 31 - 35)",
-        "32": "The Living Legends (Lvl 31 - 35)",
-        "33": "The Living Legends (Lvl 31 - 35)",
-        "34": "The Living Legends (Lvl 31 - 35)",
-        "35": "The Living Legends (Lvl 31 - 35)",
-        "36": "The Ascended Ones (Lvl 36 - 40)",
-        "37": "The Ascended Ones (Lvl 36 - 40)",
-        "38": "The Ascended Ones (Lvl 36 - 40)",
-        "39": "The Ascended Ones (Lvl 36 - 40)",
-        "40": "The Ascended Ones (Lvl 36 - 40)",
-        "41": "Lesser Gods (Lvl 41 - 45)",
-        "42": "Lesser Gods (Lvl 41 - 45)",
-        "43": "Lesser Gods (Lvl 41 - 45)",
-        "44": "Lesser Gods (Lvl 41 - 45)",
-        "45": "Lesser Gods (Lvl 41 - 45)",
-        "46": "Greater Gods (Lvl 46 - 50)",
-        "47": "Greater Gods (Lvl 46 - 50)",
-        "48": "Greater Gods (Lvl 46 - 50)",
-        "49": "Greater Gods (Lvl 46 - 50)",
-        "50": "Greater Gods (Lvl 46 - 50)",
-        "51": "Assembly of the Seven (Lvl 51+)",
-        "52": "God",
-    }.get(x, "")
 
 
 class LevelException(Exception):
@@ -107,10 +47,10 @@ class Level(commands.Cog, name="Level"):
         role = get(guild.roles, name=role_name)
         await discord_user.add_roles(role)
 
-    async def update_discord_role(self, discord_user: discord.Member, user: User, guild: discord.Guild):
+    async def update_discord_role(self, discord_user: discord.Member, guild: discord.Guild, current_level: LevelModel, next_level: LevelModel):
         """Atualiza cargo"""
-        current_role_name = switch(str(user.level_id))
-        new_role_name = switch(str(user.level_id + 1))
+        current_role_name = current_level.name
+        new_role_name = next_level.name
         if current_role_name != new_role_name:
             log.info(f"Atualizando cargo de: {current_role_name} para {new_role_name}")
             new_role = get(guild.roles, name=new_role_name)
@@ -141,11 +81,14 @@ class Level(commands.Cog, name="Level"):
             await UserRepository(session).update(pk=user.id, data={"experience": user.experience + experience})
 
     async def evolve_user(self, user: User, discord_user: discord.Member, guild: discord.Guild) -> tuple[bool, int]:
-        experience_required = await self.prox_nivel(user.level_id)
-        if user.experience >= experience_required and user.level_id < MAX_LEVEL:
+        experience_required = await self.prox_nivel(user.level.value)
+        if user.experience >= experience_required and user.level.value < MAX_LEVEL:
             async with self.bot.session as session:
-                user: User = await UserRepository(session).update(pk=user.id, data={"level_id": user.level_id + 1})
-                await self.update_discord_role(discord_user=discord_user, user=user, guild=guild)
+                current_level = user.level
+                levels = await LevelRepository(session).filter(value=user.level.value + 1)
+                next_level = levels.first()
+                user: User = await UserRepository(session).update(pk=user.id, data={"level_id": next_level.id})
+                await self.update_discord_role(discord_user=discord_user, guild=guild, current_level=current_level, next_level=next_level)
                 session.refresh(user)
                 return True, user.level_id
         return False, user.level_id
@@ -170,9 +113,14 @@ class Level(commands.Cog, name="Level"):
                 "total_messages": 0,
                 "updated_at": datetime.now(),
             }
-            user: User = await UserRepository(session).create(data=data)
+            user: User = await UserRepository(session).create(data=data, )
             log.info(f"Usuário {user.name} adicionado!")
-            await self.set_discord_role(role_name="Rookies (lvl 1 - 5)", discord_user=author, guild=guild)
+
+            users: ScalarResult[User] = await UserRepository(session).filter(
+                discord_user_id=str(author.id), load_relationship=True
+            )
+            user = users.first()
+            await self.set_discord_role(role_name=user.level.name, discord_user=author, guild=guild)
             return user
 
     async def update_total_messages(self, message: discord.Message) -> None:
@@ -182,7 +130,6 @@ class Level(commands.Cog, name="Level"):
                 discord_user_id=str(message.author.id), load_relationship=True
             )
             user = users.first()
-            await self.set_discord_role(role_name="Rookies (lvl 1 - 5)", discord_user=message.author, guild=message.guild)
 
             if not user:
                 log.error("Usuário não encontrado")
@@ -221,6 +168,7 @@ class Level(commands.Cog, name="Level"):
 
             if not user:
                 await ctx.send("Usuário não encontrado")
+                return
 
             if user.server.discord_id != str(ctx.guild.id):
                 error = f"Usuário {user.name} não pertence a esse servidor"

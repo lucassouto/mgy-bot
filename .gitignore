@@ -182,3 +182,4 @@ pyrightconfig.json
 deploy&dumps
 *.exe
 test.py
+*.log.*
