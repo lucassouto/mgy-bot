@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from random import randint
 
 import discord
+from decouple import config
 from discord.ext import commands
 from discord.utils import get
 from sqlalchemy import ScalarResult
@@ -157,12 +158,15 @@ class Level(commands.Cog, name="Level"):
     async def experience(self, ctx: commands.Context):
         """Mostra o nivel e experiencia atual"""
 
-        def switch_guild(guild_id: int):
-            """Switch case para pegar macro"""
-            return {
-                470710752789921803: os.environ["MACRO"],
-                582709300506656792: os.environ["MACRO2"],
-            }.get(guild_id, "MGY")
+        def build_footer_infos(guild_id: int) -> tuple:
+            icon_url = config("BOT_ICON")
+            if guild_id in [470710752789921803, 582709300506656792]:
+                text = {
+                    470710752789921803: os.environ["MACRO"],
+                    582709300506656792: os.environ["MACRO2"],
+                }[guild_id]
+                return text, icon_url
+            return config("BOT_DESCRIPTION", default="MGY"), icon_url
 
         async with self.bot.session as session:
             users: ScalarResult[User] = await UserRepository(session).filter(
@@ -170,35 +174,34 @@ class Level(commands.Cog, name="Level"):
             )
             user = users.first()
 
-            if not user:
-                await ctx.send("Usuário não encontrado")
-                return
+        if not user:
+            await ctx.send("Usuário não encontrado")
+            return
 
-            if user.server.discord_id != str(ctx.guild.id):
-                error = f"Usuário {user.name} não pertence a esse servidor"
-                log.error(error)
-                raise LevelException(error)
+        if user.server.discord_id != str(ctx.guild.id):
+            error = f"Usuário {user.name} não pertence a esse servidor"
+            log.error(error)
+            raise LevelException(error)
 
-            log.info("Buscando exp do usuário")
+        log.info("Buscando exp do usuário")
 
-            embed = discord.Embed(colour=0xFA00D4)
-            embed.set_author(
-                name=ctx.author.name,
-                url="https://www.youtube.com/watch?v=Tu5-h4Ye0J0",
-                icon_url=ctx.author.avatar.url,
-            )
+        embed = discord.Embed(colour=0xFA00D4)
+        embed.set_author(
+            name=ctx.author.name,
+            url="https://www.youtube.com/watch?v=Tu5-h4Ye0J0",
+            icon_url=ctx.author.avatar.url,
+        )
+        embed.add_field(name="Level atual", value=f"{user.level.value} - {user.level.name}")
+        embed.add_field(name="Exp atual", value=user.experience)
+        embed.add_field(
+            name="Próximo nível em",
+            value=str(int((await self.prox_nivel(user.level.value)) - user.experience)),
+        )
 
-            embed.add_field(name="Level atual", value=f"{user.level.value} - {user.level.name}")
-            embed.add_field(name="Exp atual", value=user.experience)
-            embed.add_field(
-                name="Próximo nível em",
-                value=str(int((await self.prox_nivel(user.level.value)) - user.experience)),
-            )
-            embed.set_footer(
-                text=switch_guild(ctx.guild.id),
-                icon_url="https://cdn.discordapp.com/avatars/596088044877119507/0d26138b572e7dfffc6cab54073cdb31.webp",
-            )
-            await ctx.send(embed=embed)
+        text, icon_url = build_footer_infos(ctx.guild.id)
+        embed.set_footer(text=text, icon_url=icon_url)
+
+        await ctx.send(embed=embed)
 
 
 async def setup(bot):
