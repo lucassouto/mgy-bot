@@ -12,6 +12,7 @@ from discord.ext import commands
 from discord.utils import get
 from sqlalchemy import ScalarResult
 
+from bot import MGYBot
 from models import Level as LevelModel
 from models import Server, User
 from repositories import LevelRepository, ServerRepository, UserRepository
@@ -32,7 +33,7 @@ class Level(commands.Cog, name="Level"):
     Classe para cuidar dos eventos de level
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: MGYBot):
         self.bot = bot
 
     async def set_discord_role(self, role_name: str, discord_user: discord.Member, guild: discord.Guild):
@@ -68,7 +69,7 @@ class Level(commands.Cog, name="Level"):
     async def update_experience(self, user: User):
         experience = int(BASE + randint(0, MAX_RAND + int(user.level_id * 0.5)))
 
-        if self.bot.bonusXP:
+        if self.bot.bonus_xp:
             experience *= 2
 
         async with self.bot.session as session:
@@ -203,6 +204,6 @@ class Level(commands.Cog, name="Level"):
         await ctx.send(embed=embed)
 
 
-async def setup(bot):
+async def setup(bot: MGYBot):
     """Adiciona cog ao bot"""
     await bot.add_cog(Level(bot))

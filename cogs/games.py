@@ -54,7 +54,6 @@ class Games(commands.Cog, name="Games"):
 
     def __init__(self, bot):
         self.bot = bot
-        self.lista_acoes = []
         self.score = 0
 
     @commands.command(aliases=["st", "init", "cdc", "crappy", "dungeon", "crawler"])
@@ -64,9 +63,9 @@ class Games(commands.Cog, name="Games"):
             await title(ctx)
             self.bot.game = True
             await self.crappy_dungeon(ctx)
-            await ctx.channel.purge(limit=self.bot.total_mensagem + 3)
-            self.bot.total_mensagem = 0
-            self.bot.acoes = []
+            await ctx.channel.purge(limit=self.bot.total_messages + 3)
+            self.bot.total_messages = 0
+            self.bot.actions = []
             self.bot.game = False
             await ctx.send("YOUR SCORE WAS " + str(self.score))
 
@@ -188,12 +187,12 @@ class Games(commands.Cog, name="Games"):
                     + "\n-->Type 1 to START or 0 to GIVE UP:  \n"
                 )
                 await asyncio.sleep(TEMPO)
-                if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                if not (self.bot.actions) or ("stop" in self.bot.actions):
                     self.bot.game = False
                     log.info("Encerrando jogo")
                     return
-                playerState = int(most_common(self.bot.acoes))
-                self.bot.acoes = []
+                playerState = int(most_common(self.bot.actions))
+                self.bot.actions = []
 
             # or continue text
             else:
@@ -206,12 +205,12 @@ class Games(commands.Cog, name="Games"):
                     + "\n-->Type 1 to START or 0 to GIVE UP:  \n"
                 )
                 await asyncio.sleep(TEMPO)
-                if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                if not (self.bot.actions) or ("stop" in self.bot.actions):
                     self.bot.game = False
                     log.info("Encerrando jogo")
                     return
-                playerState = int(most_common(self.bot.acoes))
-                self.bot.acoes = []
+                playerState = int(most_common(self.bot.actions))
+                self.bot.actions = []
 
             # cheats and easter eggs
             if playerState == 99:
@@ -250,12 +249,12 @@ class Games(commands.Cog, name="Games"):
                     while action != 1:
                         await ctx.send("\n-->Type 1 to continue  \n")
                         await asyncio.sleep(TEMPO)
-                        if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                        if not (self.bot.actions) or ("stop" in self.bot.actions):
                             self.bot.game = False
                             log.info("Encerrando jogo")
                             return
-                        action = int(most_common(self.bot.acoes))
-                        self.bot.acoes = []
+                        action = int(most_common(self.bot.actions))
+                        self.bot.actions = []
 
                 # ROOM WITH MONSTER
                 elif roomGen == 2:
@@ -301,12 +300,12 @@ class Games(commands.Cog, name="Games"):
 
                     await asyncio.sleep(TEMPO)
 
-                    if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                    if not (self.bot.actions) or ("stop" in self.bot.actions):
                         self.bot.game = False
                         log.info("Encerrando jogo")
                         return
-                    action = int(most_common(self.bot.acoes))
-                    self.bot.acoes = []
+                    action = int(most_common(self.bot.actions))
+                    self.bot.actions = []
 
                     if action != 1:
                         # RUN AWAY
@@ -362,12 +361,12 @@ class Games(commands.Cog, name="Games"):
                     await ctx.send("\n-->Type 1 to disarm \n-->Type other number to avoid the trap \n")
                     await asyncio.sleep(TEMPO)
 
-                    if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                    if not (self.bot.actions) or ("stop" in self.bot.actions):
                         self.bot.game = False
                         log.info("Encerrando jogo")
                         return
-                    action = int(most_common(self.bot.acoes))
-                    self.bot.acoes = []
+                    action = int(most_common(self.bot.actions))
+                    self.bot.actions = []
 
                     if action != 1:
                         await ctx.send("\n You avoided the trap")
@@ -404,12 +403,12 @@ class Games(commands.Cog, name="Games"):
                     await ctx.send("\n-->Type 1 to open \n-->Type other number to proceed \n")
 
                     await asyncio.sleep(TEMPO)
-                    if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                    if not (self.bot.actions) or ("stop" in self.bot.actions):
                         self.bot.game = False
                         log.info("Encerrando jogo")
                         return
-                    action = int(most_common(self.bot.acoes))
-                    self.bot.acoes = []
+                    action = int(most_common(self.bot.actions))
+                    self.bot.actions = []
 
                     if action != 1:
                         await ctx.send("\n You leave the closed chest behind \n")
@@ -438,12 +437,12 @@ class Games(commands.Cog, name="Games"):
                             await ctx.send("\n-->Type 1 to drink \n-->Type other number to proceed \n")
 
                             await asyncio.sleep(TEMPO)
-                            if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                            if not (self.bot.actions) or ("stop" in self.bot.actions):
                                 self.bot.game = False
                                 log.info("Encerrando jogo")
                                 return
-                            action = int(most_common(self.bot.acoes))
-                            self.bot.acoes = []
+                            action = int(most_common(self.bot.actions))
+                            self.bot.actions = []
 
                             if action != 1:
                                 await ctx.send("\n You leave the bottle behind...")
@@ -463,12 +462,12 @@ class Games(commands.Cog, name="Games"):
                             await ctx.send("\n-->Type 1 to drink \n-->Type other number to proceed \n")
 
                             await asyncio.sleep(TEMPO)
-                            if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                            if not (self.bot.actions) or ("stop" in self.bot.actions):
                                 self.bot.game = False
                                 log.info("Encerrando jogo")
                                 return
-                            action = int(most_common(self.bot.acoes))
-                            self.bot.acoes = []
+                            action = int(most_common(self.bot.actions))
+                            self.bot.actions = []
 
                             if action != 1:
                                 await ctx.send(" \nYou leave the bottle behind...")
@@ -487,12 +486,12 @@ class Games(commands.Cog, name="Games"):
                             await ctx.send("\n-->Type 1 to read it \n-->Type other number to proceed \n")
 
                             await asyncio.sleep(TEMPO)
-                            if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                            if not (self.bot.actions) or ("stop" in self.bot.actions):
                                 self.bot.game = False
                                 log.info("Encerrando jogo")
                                 return
-                            action = int(most_common(self.bot.acoes))
-                            self.bot.acoes = []
+                            action = int(most_common(self.bot.actions))
+                            self.bot.actions = []
 
                             if action != 1:
                                 await ctx.send("\n You leave the scroll behind...")
@@ -533,12 +532,12 @@ class Games(commands.Cog, name="Games"):
                             await ctx.send("\n-->Type 1 to continue  \n")
 
                             await asyncio.sleep(TEMPO)
-                            if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                            if not (self.bot.actions) or ("stop" in self.bot.actions):
                                 self.bot.game = False
                                 log.info("Encerrando jogo")
                                 return
-                            action = int(most_common(self.bot.acoes))
-                            self.bot.acoes = []
+                            action = int(most_common(self.bot.actions))
+                            self.bot.actions = []
 
                         await ctx.send("\n You was zapped by a mysterious energy!")
                         await ctx.send(" Your stats have been reset!")
@@ -567,12 +566,12 @@ class Games(commands.Cog, name="Games"):
                             await ctx.send("\n-->Type 1 to continue  \n")
 
                             await asyncio.sleep(TEMPO)
-                            if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                            if not (self.bot.actions) or ("stop" in self.bot.actions):
                                 self.bot.game = False
                                 log.info("Encerrando jogo")
                                 return
-                            action = int(most_common(self.bot.acoes))
-                            self.bot.acoes = []
+                            action = int(most_common(self.bot.actions))
+                            self.bot.actions = []
 
             # GAME OVER MESSAGES
 
@@ -589,12 +588,12 @@ class Games(commands.Cog, name="Games"):
                 await ctx.send("\n-->Type 1 to TRY AGAIN or 0 to GIVE UP:  \n")
 
                 await asyncio.sleep(TEMPO)
-                if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                if not (self.bot.actions) or ("stop" in self.bot.actions):
                     self.bot.game = False
                     log.info("Encerrando jogo")
                     return
-                action = int(most_common(self.bot.acoes))
-                self.bot.acoes = []
+                action = int(most_common(self.bot.actions))
+                self.bot.actions = []
 
                 if action == 1:
                     playerState = 1
@@ -622,12 +621,12 @@ class Games(commands.Cog, name="Games"):
                 await ctx.send("\n-->Type 1 to TRY AGAIN or 0 to GIVE UP:  \n")
 
                 await asyncio.sleep(TEMPO)
-                if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                if not (self.bot.actions) or ("stop" in self.bot.actions):
                     self.bot.game = False
                     log.info("Encerrando jogo")
                     return
-                action = int(most_common(self.bot.acoes))
-                self.bot.acoes = []
+                action = int(most_common(self.bot.actions))
+                self.bot.actions = []
 
                 if action == 1:
                     playerState = 1
@@ -651,12 +650,12 @@ class Games(commands.Cog, name="Games"):
                 await ctx.send("\n-->Type 1 to TRY AGAIN or 0 to GIVE UP:  \n")
 
                 await asyncio.sleep(TEMPO)
-                if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                if not (self.bot.actions) or ("stop" in self.bot.actions):
                     self.bot.game = False
                     log.info("Encerrando jogo")
                     return
-                action = int(most_common(self.bot.acoes))
-                self.bot.acoes = []
+                action = int(most_common(self.bot.actions))
+                self.bot.actions = []
 
                 if action == 1:
                     playerState = 1
@@ -678,12 +677,12 @@ class Games(commands.Cog, name="Games"):
                 await ctx.send("\n-->Type 1 to TRY AGAIN or 0 to GIVE UP:  \n")
 
                 await asyncio.sleep(TEMPO)
-                if not (self.bot.acoes) or ("stop" in self.bot.acoes):
+                if not (self.bot.actions) or ("stop" in self.bot.actions):
                     self.bot.game = False
                     log.info("Encerrando jogo")
                     return
-                action = int(most_common(self.bot.acoes))
-                self.bot.acoes = []
+                action = int(most_common(self.bot.actions))
+                self.bot.actions = []
 
                 if action == 1:
                     playerState = 1

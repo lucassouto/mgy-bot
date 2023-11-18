@@ -29,13 +29,9 @@ bot = MGYBot(
     case_insensitive=True,
     description="Max Gay Yeah!",
     intents=MGYBot.get_intents(),
+    game_actions=[],
+    pg=Postgres(),
 )
-
-bot.game = False  # Variavel para verificar se esta ingame
-bot.acoes = []  # Acoes para jogo
-bot.total_mensagem = 0
-bot.pg = Postgres()  # Instancia unica do Postgres
-bot.bonusXP = False
 
 
 @bot.event

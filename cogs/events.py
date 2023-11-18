@@ -29,7 +29,7 @@ class Eventos(commands.Cog, name="Eventos"):
         self.voice_id = 0
         self.level = Level(bot)
         self.lista_delay = [{}]
-        self.acoes = []  # acoes para game
+        self.actions = []  # acoes para game
         self.kick_list = [229043445010923520]  # TODO - add to kicklist
 
     async def delay(self, author: int):
@@ -133,11 +133,11 @@ class Eventos(commands.Cog, name="Eventos"):
 
         # Verifica se esta in game
         if self.bot.game:
-            self.bot.total_mensagem += 1
+            self.bot.total_messages += 1
             if not message.author.bot:
                 try:
                     action = int(message.content)
-                    self.bot.acoes.append(action)
+                    self.bot.actions.append(action)
                 except ValueError:
                     pass
                 else:

@@ -154,9 +154,9 @@ class Music(commands.Cog):
 
     async def enableDoubleXP(self):
         """Habilita por 29 segundos Xp em dobro (Bonus Room)"""
-        self.bot.bonusXP = True
+        self.bot.bonus_xp = True
         await asyncio.sleep(29)
-        self.bot.bonusXP = False
+        self.bot.bonus_xp = False
 
     @tasks.loop(minutes=10.0)
     async def verifyalone(self):
