@@ -144,14 +144,16 @@ class Eventos(commands.Cog, name="Eventos"):
                     pass
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, error):
+    async def on_command_error(self, ctx: commands.Context, error: Exception):
         """Método que trata erros"""
         if isinstance(error, commands.CommandNotFound):
-            log.error("Comando inexistente")
+            await ctx.send("Não entendi o que você quis dizer 😢")
+            await ctx.send("https://media.giphy.com/media/SAAMcPRfQpgyI/giphy.gif")
         elif isinstance(error, commands.MissingRequiredArgument):
             await ctx.send_help(ctx.command)
         else:
-            log.error("Erro ao executar comando, %s", error, exc_info=1)
+            await ctx.send("Algo deu errado chame o admin!")
+            await ctx.send("https://media.giphy.com/media/SFkjp1R8iRIWc/giphy.gif")
 
 
 async def setup(bot: commands.Bot):
