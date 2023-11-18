@@ -81,11 +81,10 @@ class Level(commands.Cog, name="Level"):
                 current_level = user.level
                 levels = await LevelRepository(session).filter(value=user.level.value + 1)
                 next_level = levels.first()
-                user: User = await UserRepository(session).update(pk=user.id, data={"level_id": next_level.id})
+                await UserRepository(session).update(pk=user.id, data={"level_id": next_level.id})
                 await self.update_discord_role(
                     discord_user=discord_user, guild=guild, current_level=current_level, next_level=next_level
                 )
-                session.refresh(user)
                 return True, next_level.value
         return False, user.level.value
 
