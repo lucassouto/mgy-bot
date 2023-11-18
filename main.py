@@ -1,33 +1,18 @@
-"""
-    Bot MGY para discord, toca musica e zoa com o max
-"""
 import asyncio
 import logging
 import sys
 
 import discord
 from decouple import config
-from discord.ext import commands
 from dotenv import load_dotenv
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import SessionLocal
-from utils import __program__, logger  # pylint: disable=unused-import # noqa: F401
+from bot import MGYBot
+from utils import __program__
 from utils.cmdline import display_banner
 from utils.pgdatabase import Postgres
 
 load_dotenv(override=True)
 log = logging.getLogger("main")
-
-
-def get_prefix(client, message):
-    """Prepara prefixos para chamada do bot"""
-
-    prefixes = config("BOT_PREFIXES", cast=lambda v: [s for s in v.split(",")])
-
-    # Allow users to @mention the bot instead of using a prefix when using a command. Also optional
-    return commands.when_mentioned_or(*prefixes)(client, message)
-
 
 # Below cogs represents our folder our cogs are in.
 INITIAL_EXTENSIONS = [
@@ -39,21 +24,11 @@ INITIAL_EXTENSIONS = [
     "cogs.mod",
 ]
 
-intents = discord.Intents.default()
-intents.message_content = True
-
-
-class MGYBot(commands.Bot):
-    @property
-    def session(self) -> AsyncSession:
-        return SessionLocal()
-
-
 bot = MGYBot(
-    command_prefix=get_prefix,
+    command_prefix=MGYBot.build_prefixes,
     case_insensitive=True,
     description="Max Gay Yeah!",
-    intents=intents,
+    intents=MGYBot.get_intents(),
 )
 
 bot.game = False  # Variavel para verificar se esta ingame
@@ -75,8 +50,6 @@ async def on_ready():
 
 # after using async_with
 async def main():
-    """Main"""
-
     log.debug("##################### Iniciando %s #########################", __program__)
 
     display_banner()

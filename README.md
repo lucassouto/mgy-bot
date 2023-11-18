@@ -29,7 +29,7 @@ poetry install
 
 Run bot
 ```bash
-poetry run python bot.py
+poetry run python main.py
 ```
 
 ### Prerequisites
