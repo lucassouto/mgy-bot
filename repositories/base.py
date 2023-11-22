@@ -1,10 +1,13 @@
 from abc import ABC
+from typing import TypeVar
 
 from sqlalchemy import ScalarResult, delete, insert, inspect, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from models import BaseModel
+
+T = TypeVar("T")
 
 
 class BaseRepository(ABC):
@@ -13,7 +16,7 @@ class BaseRepository(ABC):
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create(self, data: dict) -> BaseModel:
+    async def create(self, data: dict) -> T:
         statement = insert(self.model).returning(self.model)
         result = await self.db.scalars(statement, [data])
         await self.db.commit()
@@ -32,7 +35,7 @@ class BaseRepository(ABC):
         result = await self.db.execute(statement)
         return result.scalars()
 
-    async def update(self, pk: int, data: dict) -> BaseModel:
+    async def update(self, pk: int, data: dict) -> T:
         statement = update(self.model).filter(self.model.id == pk).values(**data).returning(self.model)
         await self.db.execute(statement)
         await self.db.commit()
