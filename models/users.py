@@ -2,6 +2,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 import models
+from models.user_servers import UserServer
 
 
 class User(models.BaseModel):
@@ -12,8 +13,7 @@ class User(models.BaseModel):
     level: Mapped["models.Level"] = relationship("Level", back_populates="users")
     level_id: Mapped[int] = mapped_column(ForeignKey("levels.id"))
     experience: Mapped[int]
-    server: Mapped["models.Server"] = relationship("Server", back_populates="users")
-    server_id: Mapped[int] = mapped_column(ForeignKey("servers.id"))
+    servers: Mapped[list["models.Server"]] = relationship("Server", secondary=UserServer, back_populates="users")
     youtube: Mapped[str | None]
     twitch: Mapped[str | None]
     twitter: Mapped[str | None]
