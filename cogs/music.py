@@ -163,7 +163,7 @@ class Music(commands.Cog):
         """Verifica se está sozinho no servidor e disconecta"""
 
         log.info("Verificando se o bot está sozinho")
-        # Verifica todas as guilds salvaes
+        # Verifica todas as guilds salvas
         for guild_id in list(self.guild_voice_client):
             members = self.guild_voice_client[guild_id].channel.members
             if len(members) == 1:
@@ -218,7 +218,7 @@ class Music(commands.Cog):
             random.shuffle(self.queue[ctx.guild.id])
         await ctx.send("```Alterado a ordem da lista de musica```")
 
-    async def spotifyplaylist(self, guild_id: int, pagina: int):
+    async def spotifyplaylist(self, guild_id: int, pagina: str):
         """Separa musicas da playlist utilizando api do youtube v3"""
         log.info("Buscando videos da playlist do spotify: %s ", pagina)
 
@@ -634,7 +634,7 @@ class Music(commands.Cog):
         # URL "https://www.dropbox.com/sh/kqtsijt5jyb5pzl/AABPrMl4zTBvF9BvESO45T1Ra"
         log.info("Iniciando busca por mashups")
         # TODO: Use Path().open()
-        soup = BeautifulSoup(open("Dropbox.html", encoding=str), features="lxml")  # noqa: SIM115,PTH123
+        soup = BeautifulSoup(open("Dropbox.html", encoding="utf-8"), features="lxml")  # noqa: SIM115,PTH123
 
         # pega todos os links da pagina
         mashups = []
@@ -946,7 +946,7 @@ class Music(commands.Cog):
             else:
                 log.warning("Autor nao conectado no canal de voz")
                 await ctx.send("Você não está conectado em um canal de voz")
-                raise commands.CommandError("Author not connected to a voice channel.")
+                raise commands.CommandError("Author not connected to a voice channel.")  # Remove this
 
 
 async def setup(bot: commands.Bot):
