@@ -16,6 +16,7 @@ from bot import MGYBot
 from models import Level as LevelModel
 from models import Server, User
 from repositories import LevelRepository, ServerRepository, UserRepository
+from repositories.user_servers import UserServerRepository
 
 log = logging.getLogger("Level")
 BASE = 10  # Toda mensagem ganha a xp base
@@ -100,19 +101,25 @@ class Level(commands.Cog, name="Level"):
                 log.error(error)
                 raise LevelException(error)
 
+            levels = await LevelRepository(session).filter(value=1)
+            level = levels.first()
+            if not level:
+                error = "Level 1 não encontrado"
+                log.error(error)
+                raise LevelException(error)
+
             data = {
                 "name": author.name,
                 "discord_user_id": str(author.id),
-                "server_id": server.id,
-                "level_id": 1,
+                "level_id": level.id,
                 "experience": 0,
                 "total_messages": 0,
-                "updated_at": datetime.now(UTC),
+                "updated_at": datetime.now(UTC).replace(tzinfo=None),
             }
-            user: User = await UserRepository(session).create(
-                data=data,
-            )
+            user: User = await UserRepository(session).create(data=data)
             log.info(f"Usuário {user.name} adicionado!")
+
+            await UserServerRepository(session).create(data={"user_id": user.id, "server_id": server.id})
 
             users: ScalarResult[User] = await UserRepository(session).filter(
                 discord_user_id=str(author.id), load_relationship=True
@@ -122,7 +129,7 @@ class Level(commands.Cog, name="Level"):
             return user
 
     async def update_total_messages(self, message: discord.Message) -> None:
-        """soma 1 na quantidade de mensagens do usuario"""
+        """Soma 1 na quantidade de mensagens do usuario"""
         async with self.bot.session as session:
             users: ScalarResult[User] = await UserRepository(session).filter(
                 discord_user_id=str(message.author.id), load_relationship=True
@@ -178,7 +185,7 @@ class Level(commands.Cog, name="Level"):
             await ctx.send("Usuário não encontrado")
             return
 
-        if user.server.discord_id != str(ctx.guild.id):
+        if str(ctx.guild.id) not in [server.discord_id for server in user.servers]:
             error = f"Usuário {user.name} não pertence a esse servidor"
             log.error(error)
             raise LevelException(error)
