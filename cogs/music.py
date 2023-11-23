@@ -14,11 +14,12 @@ from urllib.parse import parse_qs, urlparse
 import discord
 import googleapiclient.discovery
 import spotipy
-import yt_dlp
 from bs4 import BeautifulSoup
 from discord.ext import commands, tasks
 from spotipy.oauth2 import SpotifyClientCredentials
 
+from services.youtube import YTDLSource
+from utils.functions import build_footer_infos
 from utils.pgdatabase import Postgres
 
 MAX_NUM = 100000
@@ -26,40 +27,7 @@ MAX_NUM = 100000
 # Inicia o logger
 log = logging.getLogger("music")
 
-# Suppress noise about console usage from errors
-yt_dlp.utils.bug_reports_message = lambda: ""
 
-ytdl_format_options = {
-    "format": "bestaudio/best",
-    "outtmpl": "%(extractor)s-%(id)s-%(title)s.%(ext)s",
-    "restrictfilenames": True,
-    "noplaylist": True,
-    "playlistrandom": True,
-    "nocheckcertificate": True,
-    "ignoreerrors": True,
-    "logtostderr": False,
-    "quiet": True,
-    "no_warnings": True,
-    "default_search": "auto",
-    # bind to ipv4 since ipv6 addresses cause issues sometimes
-    "source_address": "0.0.0.0",
-    "verbose": True,
-    "cookiefile": "cookies.txt",
-}
-
-PERFORMANCE_MODE = True
-
-ffmpeg_options = {
-    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-    "options": "-vn -sn -dn",
-}
-
-ffmpeg_options_loudnorm = {
-    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-    "options": "-vn -sn -dn -filter:a loudnorm",
-}
-
-ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 sp = spotipy.Spotify(
     auth_manager=SpotifyClientCredentials(
         client_id=os.environ["SPOTIPY_CLIENT_ID"],
@@ -80,54 +48,6 @@ def switch(guild_id: int):
         470710752789921803: os.environ["MACRO"],
         582709300506656792: os.environ["MACRO2"],
     }.get(guild_id, "MGY")
-
-
-class YTDLSource(discord.PCMVolumeTransformer):
-    """
-    Classe para definir parametros do YTDL
-    """
-
-    def __init__(self, source, *, data: dict, volume=0.5):
-        super().__init__(source, volume)
-
-        self.data = data
-        self.title: str = data.get("title")
-        self.duration = data.get("duration")
-        self.url: str = data.get("url")
-
-    @classmethod
-    async def from_url(cls, queue: dict, url: str, *, loop=None, stream=False):
-        """Retira informações da url"""
-        loop = loop or asyncio.get_event_loop()
-        try:
-            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
-
-            # Percorre a queue até encontrar um item valido
-            while not data:
-                if queue[1]:
-                    queue.pop(0)
-                    url = queue[0]
-                    data = await loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=not stream))
-                else:
-                    return None
-                if not data:
-                    await asyncio.sleep(2)  # delay para evitar too many requests
-
-            # util para busca por nome de musica
-            if "entries" in data:
-                data = data["entries"][0]
-
-            filename = data["url"] if stream else ytdl.prepare_filename(data)
-        except IndexError:
-            log.exception("Lista vazia")
-            return None
-        except Exception:
-            log.exception("Erro ao adquirir video, tentando encontrar nova na lista.")
-            raise
-        if PERFORMANCE_MODE:
-            return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options), data=data)
-        else:
-            return cls(discord.FFmpegPCMAudio(filename, **ffmpeg_options_loudnorm), data=data)
 
 
 class Music(commands.Cog):
@@ -191,14 +111,6 @@ class Music(commands.Cog):
                 "%s guilds com membros no canal de voz",
                 str(len(self.guild_voice_client)),
             )
-
-    @commands.command(hidden=True)
-    async def perf(self, ctx: commands.Context):
-        """Disable filter for perfomance"""
-        global PERFORMANCE_MODE  # pylint: disable=global-statement
-
-        PERFORMANCE_MODE = not PERFORMANCE_MODE
-        await ctx.send(PERFORMANCE_MODE)
 
     @commands.command(hidden=True)
     async def join(self, ctx: commands.Context, *, channel: discord.VoiceChannel):
@@ -313,82 +225,70 @@ class Music(commands.Cog):
 
         if self.queue[ctx.guild.id]:
             async with ctx.typing():
-                try:
-                    player = await YTDLSource.from_url(
-                        self.queue[ctx.guild.id],
-                        self.queue[ctx.guild.id][0],
-                        loop=self.bot.loop,
-                        stream=True,
+                filename, data = await YTDLSource.from_url(
+                    queue=self.queue[ctx.guild.id],
+                    url=self.queue[ctx.guild.id][0],
+                    loop=self.bot.loop,
+                    stream=True,
+                )
+                player = YTDLSource(
+                    source=discord.FFmpegPCMAudio(filename, **YTDLSource.FFMEPG_OPTIONS_LOUDNORM),
+                    data=data,
+                )
+                footer_text, icon_url = build_footer_infos(ctx.guild.id)
+
+                ctx.voice_client.play(player, after=nextOrCleanUp)
+
+                # Bonus room
+                if player.title == "Bonus Room Blitz - Donkey Kong Country":
+                    self.enableDoubleXP()
+
+                # Cria o volume global para a guild
+                if ctx.guild.id not in self.global_vol:
+                    self.global_vol[ctx.guild.id] = 50 / 100
+                ctx.voice_client.source.volume = self.global_vol[ctx.guild.id]
+
+                self.title[ctx.guild.id] = player.title
+                log.info("Tocando %s", player.title)
+
+                if player.duration:
+                    time = float(player.duration)
+                    minutes = time // 60
+                    time %= 60
+                    seconds = time
+                else:
+                    time = 24
+                    minutes = 24
+                    seconds = time
+                if len(self.queue[ctx.guild.id]) > 1:
+                    embed = discord.Embed(
+                        description=(
+                            f"[{player.title}] ({self.queue[ctx.guild.id][0]})\n "
+                            f"Duração: {int(minutes):02d}:{int(seconds):02d}\n "
+                            f"Ainda na lista: {len(self.queue[ctx.guild.id]) - 1}",
+                        ),
+                        colour=0xFA00D4,
                     )
-                except Exception:  # pylint: disable=broad-exception-caught
-                    log.exception("Erro ao iniciar o player")
-                    player = None
-                if player:
-                    # Inicia a tocar
-                    try:
-                        ctx.voice_client.play(player, after=nextOrCleanUp)
-
-                        # Bonus room
-                        if player.title == "Bonus Room Blitz - Donkey Kong Country":
-                            self.enableDoubleXP()
-
-                        # Cria o volume global para a guild
-                        if ctx.guild.id not in self.global_vol:
-                            self.global_vol[ctx.guild.id] = 50 / 100
-                        ctx.voice_client.source.volume = self.global_vol[ctx.guild.id]
-
-                        self.title[ctx.guild.id] = player.title
-                        log.info("Tocando %s", player.title)
-
-                        if player.duration:
-                            time = float(player.duration)
-                            minutes = time // 60
-                            time %= 60
-                            seconds = time
-                        else:
-                            time = 24
-                            minutes = 24
-                            seconds = time
-                        if len(self.queue[ctx.guild.id]) > 1:
-                            embed = discord.Embed(
-                                description="["
-                                + player.title
-                                + "]"
-                                + "("
-                                + self.queue[ctx.guild.id][0]
-                                + ")"
-                                + "\n Duração: {:02d}:{:02d}\nAinda na lista: {}".format(
-                                    int(minutes),
-                                    int(seconds),
-                                    len(self.queue[ctx.guild.id]) - 1,
-                                ),
-                                colour=0xFA00D4,
-                            )
-                            embed.set_footer(
-                                text=switch(ctx.guild.id),
-                                icon_url="https://cdn.discordapp.com/avatars/596088044877119507/0d26138b572e7dfffc6cab54073cdb31.webp",
-                            )
-                        else:
-                            embed = discord.Embed(
-                                description="["
-                                + player.title
-                                + "]"
-                                + "("
-                                + self.queue[ctx.guild.id][0]
-                                + ")"
-                                + f"\n Duração: {int(minutes):02d}:{int(seconds):02d}",
-                                colour=0xFA00D4,
-                            )
-                            embed.set_footer(
-                                text=switch(ctx.guild.id),
-                                icon_url="https://cdn.discordapp.com/avatars/596088044877119507/0d26138b572e7dfffc6cab54073cdb31.webp",
-                            )
-                        if self.message[ctx.guild.id]:
-                            await self.message[ctx.guild.id].edit(embed=embed)
-                        else:
-                            self.message[ctx.guild.id] = await ctx.send(embed=embed)
-                    except Exception:  # pylint: disable=broad-exception-caught
-                        log.exception("Deu ruim ao tocar!")
+                    embed.set_footer(
+                        text=footer_text,
+                        icon_url=icon_url,
+                    )
+                else:
+                    embed = discord.Embed(
+                        description=(
+                            f"[{player.title}]({self.queue[ctx.guild.id][0]})\n "
+                            f"Duração: {int(minutes):02d}:{int(seconds):02d}"
+                        ),
+                        colour=0xFA00D4,
+                    )
+                    embed.set_footer(
+                        text=footer_text,
+                        icon_url=icon_url,
+                    )
+                if self.message[ctx.guild.id]:
+                    await self.message[ctx.guild.id].edit(embed=embed)
+                else:
+                    self.message[ctx.guild.id] = await ctx.send(embed=embed)
 
     @commands.command(aliases=["vol", "v", "volmax", "maxvol"])
     async def volume(self, ctx: commands.Context, *args):
@@ -601,13 +501,13 @@ class Music(commands.Cog):
         self.message[ctx.guild.id] = None
 
         log.info("Exibindo lista")
-        if self.queue[ctx.guild.id]:
+        if self.queue.get(ctx.guild.id):
             async with ctx.typing():
                 lista = "```"
                 j = 1
 
                 for x in self.queue[ctx.guild.id]:
-                    info = ytdl.extract_info(x, download=False)
+                    info = YTDLSource.yt_dl().extract_info(x, download=False)
                     titulo = (info.get("title") if info.get("title") else x) if info else "¯\\_(ツ)_/¯"
                     lista += str(j) + ": " + titulo + "\n"
                     j += 1
@@ -673,7 +573,7 @@ class Music(commands.Cog):
             # percorre os links, pega o nome e compara com o especificado
             log.info("Iniciando comparacao com o dropbox")
             for x in mashups:
-                info = ytdl.extract_info(x, download=False)
+                info = YTDLSource.yt_dl().extract_info(x, download=False)
                 nome = info.get("title")
                 achou = 1
                 for i in range(len(num)):
@@ -843,7 +743,7 @@ class Music(commands.Cog):
                     log.info("Buscando musica: %s", str(name))
                     resultado = self.pg.query(sql)
                     if resultado:
-                        info = ytdl.extract_info(url, download=False)
+                        info = YTDLSource.yt_dl().extract_info(url, download=False)
                         titulo = " "
                         if info and info.get("title"):
                             titulo = info.get("title")
