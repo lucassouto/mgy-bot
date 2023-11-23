@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import platform
 import sys
 
 import discord
@@ -49,6 +50,12 @@ async def main():
     log.debug("##################### Iniciando %s #########################", __program__)
 
     display_banner()
+
+    if platform.system() == "Darwin":
+        # If you use macOS and want to use music module, you need to load the opus and have libopus.dylib in your path
+        # Example:
+        # os.environ["OPUS_LIB_PATH"] = "/opt/homebrew/opt/opus/lib/libopus.dylib"  # noqa: ERA001
+        discord.opus.load_opus("libopus.dylib")
 
     for extension in INITIAL_EXTENSIONS:
         try:
