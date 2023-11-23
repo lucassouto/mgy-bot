@@ -40,7 +40,7 @@ async def on_ready():
 
     log.info(f"\n\nLogged in as: {bot.user.name} - {bot.user.id}\nVersion: {discord.__version__}\n")
     # Changes Playing Status. type=1(streaming) for a standard game you could remove type and url.
-    await bot.change_presence(activity=discord.Game(name=config("BOT_GAME"), type=1))
+    await bot.change_presence(activity=discord.Game(name=config("BOT_IN_GAME"), type=1))
     log.info("Successfully logged in and booted...!")
 
 
@@ -63,4 +63,4 @@ if __name__ == "__main__":
     loop.run_until_complete(main())
     loop.close()
 
-bot.run(config("TOKEN"), reconnect=True)
+bot.run(config("BOT_TOKEN"), reconnect=True)
