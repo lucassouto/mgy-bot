@@ -2,12 +2,10 @@
     Modulo cuidar dos niveis dos usuarios
 """
 import logging
-import os
 from datetime import UTC, datetime
 from random import randint
 
 import discord
-from decouple import config
 from discord.ext import commands
 from discord.utils import get
 from sqlalchemy import ScalarResult
@@ -17,6 +15,7 @@ from models import Level as LevelModel
 from models import Server, User
 from repositories import LevelRepository, ServerRepository, UserRepository
 from repositories.user_servers import UserServerRepository
+from utils.functions import build_footer_infos
 
 log = logging.getLogger("Level")
 BASE = 10  # Toda mensagem ganha a xp base
@@ -164,16 +163,6 @@ class Level(commands.Cog, name="Level"):
     @commands.command(aliases=["exp", "experiencia", "xp"])
     async def experience(self, ctx: commands.Context):
         """Mostra o nivel e experiencia atual"""
-
-        def build_footer_infos(guild_id: int) -> tuple:
-            icon_url = config("BOT_ICON")
-            if guild_id in [470710752789921803, 582709300506656792]:
-                text = {
-                    470710752789921803: os.environ["MACRO"],
-                    582709300506656792: os.environ["MACRO2"],
-                }[guild_id]
-                return text, icon_url
-            return config("BOT_DESCRIPTION", default="MGY"), icon_url
 
         async with self.bot.session as session:
             users: ScalarResult[User] = await UserRepository(session).filter(
