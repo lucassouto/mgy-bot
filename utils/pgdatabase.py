@@ -21,7 +21,7 @@ class Postgres:
                 connection = Postgres._instance.connection = psycopg2.connect(
                     host=os.getenv("DB_HOST"),
                     user=os.getenv("DB_USER"),
-                    password=os.getenv("DB_PASSWORD"),
+                    password=os.getenv("DB_PASS"),
                     dbname=os.getenv("DB_NAME"),
                 )
                 cursor = Postgres._instance.cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
