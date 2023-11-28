@@ -13,11 +13,10 @@ from urllib.parse import parse_qs, urlparse
 
 import discord
 import googleapiclient.discovery
-import spotipy
 from bs4 import BeautifulSoup
 from discord.ext import commands, tasks
-from spotipy.oauth2 import SpotifyClientCredentials
 
+from services.spotify import SpotifyClient
 from services.youtube import YTDLSource
 from utils.functions import build_footer_infos
 from utils.pgdatabase import Postgres
@@ -28,12 +27,6 @@ MAX_NUM = 100000
 log = logging.getLogger("music")
 
 
-sp = spotipy.Spotify(
-    auth_manager=SpotifyClientCredentials(
-        client_id=os.environ["SPOTIPY_CLIENT_ID"],
-        client_secret=os.environ["SPOTIPY_CLIENT_SECRET"],
-    )
-)
 youtube = googleapiclient.discovery.build(
     "youtube",
     "v3",
@@ -129,45 +122,6 @@ class Music(commands.Cog):
         else:
             random.shuffle(self.queue[ctx.guild.id])
         await ctx.send("```Alterado a ordem da lista de musica```")
-
-    async def spotifyplaylist(self, guild_id: int, pagina: str):
-        """Separa musicas da playlist utilizando api do youtube v3"""
-        log.info("Buscando videos da playlist do spotify: %s ", pagina)
-
-        # A conexão com o spotify as vezes reseta, implementar retry
-        tries = 0
-        while tries <= 3:
-            try:
-                tries += 1
-                offset = 0
-                response = sp.playlist_tracks(
-                    pagina,
-                    offset=offset,
-                    fields="items.track.name,items.track.artists.name",
-                )
-
-                tracks = response["items"]
-                while len(response["items"]) >= 100:
-                    offset += 100
-                    response = sp.playlist_tracks(
-                        pagina,
-                        offset=offset,
-                        limit=100,
-                        fields="items.track.name,items.track.artists.name",
-                    )
-                    tracks.extend(response["items"])
-
-                for item in tracks:
-                    self.queue[guild_id].append(item["track"]["artists"][0]["name"] + " " + item["track"]["name"])
-
-                log.info(self.queue)
-                break
-            except Exception:  # pylint: disable=broad-exception-caught
-                # if erro 403
-                log.exception("Erro ao spotify playlist")
-                await asyncio.sleep(2)  # delay para evitar too many requests
-                if tries >= 2:
-                    raise
 
     async def playlist(self, guild_id: int, pagina: int):
         """Separa musicas da playlist utilizando api do youtube v3"""
@@ -385,7 +339,8 @@ class Music(commands.Cog):
                 else:
                     self.queue[ctx.guild.id].append(url)
             elif re.search("spotify", url):
-                await self.spotifyplaylist(ctx.guild.id, url)
+                tracks = await SpotifyClient().extract_playlist_to_youtube(link=url)
+                self.queue[ctx.guild.id].extend(tracks)
             elif re.search("playlist", url):
                 await self.playlist(ctx.guild.id, url)
             elif "-f" in args:
@@ -664,7 +619,8 @@ class Music(commands.Cog):
             # Verifica se eh uma url, se nao for, completa o nome com args para pesquisa
             if await self.is_url(url):
                 if re.search("spotify", url):
-                    await self.spotifyplaylist(ctx.guild.id, url)
+                    tracks = await SpotifyClient().extract_playlist_to_youtube(link=url)
+                    self.queue[ctx.guild.id].extend(tracks)
                 elif re.search("playlist", url):
                     await self.playlist(ctx.guild.id, url)
                 else:  # noqa: PLR5501
